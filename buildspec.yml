@@ -1,0 +1,56 @@
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      python: 3.9
+    commands:
+      - echo "nothing to do in install"
+  pre_build:
+    commands:
+      - echo "Installing dependencies and executing unit tests - `pwd`"
+      - cd deployment
+      - ./run-unit-tests.sh
+      - echo "Installing dependencies and executing unit tests completed `date`"
+  build:
+    commands:
+      - echo "Starting build `date` in `pwd`"
+      - . ../.venv-temp/bin/activate
+      - |-
+        build-s3-cdk-dist --log-level DEBUG deploy \
+            --source-bucket-name $DIST_OUTPUT_BUCKET \
+            --solution-name $SOLUTION_NAME \
+            --version-code $VERSION \
+            --cdk-app-path ../source/infrastructure/deploy.py \
+            --cdk-app-entrypoint deploy:build_app
+      - echo "Build completed `date`"
+      - echo "Cleanup build generated files that are not needed for next steps/stages of build/pipeline"
+      - build-s3-cdk-dist clean-for-scan
+      - echo "Starting source-code-package `date` in `pwd`"
+      - build-s3-cdk-dist source-code-package --ignore "**/build/*" --solution-name $SOLUTION_NAME
+      - echo "Source Code Package completed `date`"
+  post_build:
+    commands:
+      - echo "Retrieving next stage buildspec `date` in `pwd`"
+      - aws s3 cp s3://${SOLUTIONS_BUILD_ASSETS_BUCKET:-solutions-build-assets}/changelog-spec.yml ../buildspec.yml
+      - echo "Retrieving next stage buildspec complete"
+      - echo "Post build completed on `date`"
+
+artifacts:
+  exclude-paths:
+    - source/cdk_solution_helper_py/helpers_cdk/build/*
+    - source/cdk_solution_helper_py/helpers_common/build/*
+  files:
+    - .cfnnag_global_disable
+    - .gitignore
+    - CHANGELOG.md
+    - CODE_OF_CONDUCT.md
+    - CONTRIBUTING.md
+    - LICENSE.txt
+    - NOTICE.txt
+    - README.md
+    - buildspec.yml
+    - sonar-project.properties
+    - .github/**/*
+    - deployment/**/*
+    - source/**/*

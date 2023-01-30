@@ -1,0 +1,12 @@
+[
+  {
+    "Action": {
+      "Operation": "CRYPTOGRAPHIC_HASH",
+      "Parameters": {
+        "entityTypeFilter": "[\"PHONE_NUMBER\"]",
+        "secretId": "arn:aws:secretsmanager:us-east-1:0123456789:secret:AwsGlueDataBrew-transform-secret<name>",
+        "sourceColumns": "[\"phone\"]"
+      }
+    }
+  }
+]

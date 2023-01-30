@@ -1,0 +1,11 @@
+[
+  {
+    "Action": {
+      "Operation": "DETERMINISTIC_ENCRYPT",
+      "Parameters": {
+        "secretId": "arn:aws:secretsmanager:us-east-1:0123456789:secret:AwsGlueDataBrew-transform-secret<name>",
+        "sourceColumns": "[\"address\"]"
+      }
+    }
+  }
+]

@@ -1,0 +1,4 @@
+../../../../../../cdk_solution_helper_py/helpers_common
+../../../../../../aws_lambda/shared/util
+requests==2.28.1
+crhelper

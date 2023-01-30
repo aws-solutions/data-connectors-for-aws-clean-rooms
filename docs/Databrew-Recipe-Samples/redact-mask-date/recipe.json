@@ -1,0 +1,13 @@
+[
+  {
+    "Action": {
+      "Operation": "MASK_DATE",
+      "Parameters": {
+        "locale": "en",
+        "maskSymbol": "#",
+        "redact": "[\"YEAR\",\"DAY\"]",
+        "sourceColumns": "[\"birthdate\"]"
+      }
+    }
+  }
+]

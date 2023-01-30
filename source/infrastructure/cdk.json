@@ -1,0 +1,12 @@
+{
+  "app": "python3 deploy.py",
+  "context": {
+    "SOLUTION_NAME": "Data Connectors for AWS Clean Rooms",
+    "SOLUTION_ID": "SO0221",
+    "SOLUTION_VERSION": "v1.0.0",
+    "SYNTH_TRANSFORMS": true,
+    "SYNTH_ORCHESTRATION": true,
+    "SYNTH_BUCKETS": true,
+    "BUCKET_NAME": "BUCKET_NAME"
+  }
+}

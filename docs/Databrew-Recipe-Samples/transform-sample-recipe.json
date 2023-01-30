@@ -1,0 +1,97 @@
+[
+  {
+    "Action": {
+      "Operation": "FILL_WITH_MOST_FREQUENT",
+      "Parameters": {
+        "sourceColumn": "cc_type"
+      }
+    }
+  },
+  {
+    "Action": {
+      "Operation": "YEAR",
+      "Parameters": {
+        "dateTimeFormat": "yyyy-mm-dd*HH:MM:SS",
+        "functionStepType": "YEAR",
+        "sourceColumn": "cc_expiredate",
+        "targetColumn": "cc_expiredate_YEAR"
+      }
+    }
+  },
+  {
+    "Action": {
+      "Operation": "FLAG_COLUMN_FROM_PATTERN",
+      "Parameters": {
+        "pattern": "f",
+        "sourceColumn": "gender",
+        "targetColumn": "gender_flagged"
+      }
+    }
+  },
+  {
+    "Action": {
+      "Operation": "GROUP_BY",
+      "Parameters": {
+        "groupByAggFunctionOptions": "[{\"sourceColumnName\":\"cc_type\",\"targetColumnName\":\"cc_type_count\",\"targetColumnDataType\":\"string\",\"functionName\":\"COUNT\"}]",
+        "sourceColumns": "[\"state\"]",
+        "useNewDataFrame": "false"
+      }
+    }
+  },
+  {
+    "Action": {
+      "Operation": "CATEGORICAL_MAPPING",
+      "Parameters": {
+        "categoryMap": "{\"Houston\":\"Houston\",\"Kansas City\":\"Kansas City\",\"Goff\":\"Goff\",\"Centennial\":\"Centennial\",\"Wood River\":\"Wood River\"}",
+        "deleteOtherRows": "false",
+        "mapType": "TEXT",
+        "mappingOption": "TOP_X_VALUES",
+        "other": "Others",
+        "sourceColumn": "city",
+        "targetColumn": "city_mapped"
+      }
+    }
+  },
+  {
+    "Action": {
+      "Operation": "MASK_RANGE",
+      "Parameters": {
+        "alphabet": "[\"WHITESPACE\",\"SYMBOLS\"]",
+        "firstN": "5",
+        "maskMode": "MASK_FIRST_N",
+        "maskSymbol": "#",
+        "sourceColumns": "[\"email\"]",
+        "stop": "5"
+      }
+    }
+  },
+  {
+    "Action": {
+      "Operation": "MASK_DATE",
+      "Parameters": {
+        "maskSymbol": "#",
+        "redact": "[\"YEAR\"]",
+        "sourceColumns": "[\"birthdate\"]"
+      }
+    }
+  },
+  {
+    "Action": {
+      "Operation": "REPLACE_WITH_RANDOM_BETWEEN",
+      "Parameters": {
+        "lowerBound": "1",
+        "sourceColumns": "[\"cc_cvc\"]",
+        "upperBound": "200"
+      }
+    }
+  },
+  {
+    "Action": {
+      "Operation": "SHUFFLE_ROWS",
+      "Parameters": {
+        "groupByColumns": "[\"state\"]",
+        "sourceColumns": "[\"zip\"]"
+      }
+    }
+  }
+]
