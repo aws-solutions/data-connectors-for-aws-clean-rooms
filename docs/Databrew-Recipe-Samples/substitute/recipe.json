@@ -1,0 +1,12 @@
+[
+  {
+    "Action": {
+      "Operation": "REPLACE_WITH_RANDOM_BETWEEN",
+      "Parameters": {
+        "lowerBound": "100",
+        "sourceColumns": "[\"cc_cvc\"]",
+        "upperBound": "600"
+      }
+    }
+  }
+]

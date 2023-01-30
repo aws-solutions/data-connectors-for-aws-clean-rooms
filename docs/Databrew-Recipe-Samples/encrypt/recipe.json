@@ -1,0 +1,11 @@
+[
+  {
+    "Action": {
+      "Operation": "ENCRYPT",
+      "Parameters": {
+        "kmsKeyArn": "arn:aws:kms:us-east-1:123456780:key/<kms-key-id>",
+        "sourceColumns": "[\"fname\",\"lname\"]"
+      }
+    }
+  }
+]

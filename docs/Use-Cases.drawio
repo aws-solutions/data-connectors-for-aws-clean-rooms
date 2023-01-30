@@ -1,0 +1,76 @@
+<mxfile host="65bd71144e">
+    <diagram id="Q3IZNeusegPFfXNAoilN" name="Page-1">
+        <mxGraphModel dx="1250" dy="770" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <mxCell id="2" value="Administrator" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="220" y="180" width="30" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="4" value="Prepare Data Provider" style="ellipse;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="450" y="330" width="140" height="70" as="geometry"/>
+                </mxCell>
+                <mxCell id="7" value="Data Analyst" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="220" y="400" width="30" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="8" value="Create Connector Stack" style="ellipse;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="450" y="130" width="140" height="70" as="geometry"/>
+                </mxCell>
+                <mxCell id="9" value="Launch Transform Pipeline" style="ellipse;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="450" y="595" width="140" height="70" as="geometry"/>
+                </mxCell>
+                <mxCell id="10" value="Create Endpoint&lt;br&gt;Configure Push Credentials" style="html=1;endArrow=open;elbow=vertical;startArrow=none;endFill=0;strokeColor=#545B64;rounded=0;exitX=0.5;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;" parent="1" source="7" target="4" edge="1">
+                    <mxGeometry width="100" relative="1" as="geometry">
+                        <mxPoint x="340" y="390" as="sourcePoint"/>
+                        <mxPoint x="440" y="390" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="12" value="Connection Data" style="html=1;endArrow=open;elbow=vertical;startArrow=none;endFill=0;strokeColor=#545B64;rounded=0;entryX=0.5;entryY=0.5;entryDx=0;entryDy=0;entryPerimeter=0;" parent="1" source="4" target="2" edge="1">
+                    <mxGeometry width="100" relative="1" as="geometry">
+                        <mxPoint x="245" y="150" as="sourcePoint"/>
+                        <mxPoint x="437.40689690355066" y="175.90092842932404" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="13" value="CloudFormation" style="html=1;endArrow=open;elbow=vertical;startArrow=none;endFill=0;strokeColor=#545B64;rounded=0;exitX=0.5;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;" parent="1" source="2" target="8" edge="1">
+                    <mxGeometry width="100" relative="1" as="geometry">
+                        <mxPoint x="466.17098626423376" y="214.12176030182468" as="sourcePoint"/>
+                        <mxPoint x="245" y="380" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="14" value="Scheduler" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="220" y="600" width="30" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="15" value="On-Demand" style="html=1;endArrow=open;elbow=vertical;startArrow=none;endFill=0;strokeColor=#545B64;rounded=0;exitX=0.5;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;" edge="1" parent="1" source="7" target="9">
+                    <mxGeometry width="100" relative="1" as="geometry">
+                        <mxPoint x="245" y="440" as="sourcePoint"/>
+                        <mxPoint x="466.31266661947893" y="389.525181297312" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="16" value="Daily/Weekly/Monthly" style="html=1;endArrow=open;elbow=vertical;startArrow=none;endFill=0;strokeColor=#545B64;rounded=0;exitX=0.5;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;" edge="1" parent="1" source="14" target="9">
+                    <mxGeometry width="100" relative="1" as="geometry">
+                        <mxPoint x="245" y="440" as="sourcePoint"/>
+                        <mxPoint x="485.70018249105965" y="537.9119386404309" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="17" value="Customize DataBrew Transforms" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="450" y="470" width="140" height="70" as="geometry"/>
+                </mxCell>
+                <mxCell id="18" value="" style="html=1;endArrow=open;elbow=vertical;startArrow=none;endFill=0;strokeColor=#545B64;rounded=0;exitX=0.5;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;" edge="1" parent="1" source="7" target="17">
+                    <mxGeometry width="100" relative="1" as="geometry">
+                        <mxPoint x="245" y="440" as="sourcePoint"/>
+                        <mxPoint x="466.31266661947893" y="389.525181297312" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="19" value="Delete Connector Stack" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="450" y="220" width="140" height="70" as="geometry"/>
+                </mxCell>
+                <mxCell id="20" value="CloudFormation" style="html=1;endArrow=open;elbow=vertical;startArrow=none;endFill=0;strokeColor=#545B64;rounded=0;exitX=0.5;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;" edge="1" parent="1" source="2" target="19">
+                    <mxGeometry width="100" relative="1" as="geometry">
+                        <mxPoint x="245" y="290" as="sourcePoint"/>
+                        <mxPoint x="475.52615477490804" y="196.9806743890723" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>

@@ -1,0 +1,15 @@
+[run]
+omit =
+    infrastructure/setup.py
+    infrastructure/deploy.py
+    infrastructure/cdk.out/*
+    tests/*
+    cdk_solution_helper_py/helpers_common/*
+source =
+    infrastructure
+    aws_lambda
+
+[report]
+fail_under = 0.0
+exclude_lines =
+    setuptools

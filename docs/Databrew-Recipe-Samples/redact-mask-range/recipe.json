@@ -1,0 +1,15 @@
+[
+  {
+    "Action": {
+      "Operation": "MASK_RANGE",
+      "Parameters": {
+        "alphabet": "[\"WHITESPACE\",\"SYMBOLS\"]",
+        "firstN": "5",
+        "maskMode": "MASK_FIRST_N",
+        "maskSymbol": "#",
+        "sourceColumns": "[\"email\"]",
+        "stop": "5"
+      }
+    }
+  }
+]
