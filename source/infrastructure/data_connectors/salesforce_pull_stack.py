@@ -29,7 +29,6 @@ from data_connectors.aws_lambda import LAMBDA_PATH
 from data_connectors.aws_lambda.layers.aws_solutions.layer import SolutionsLayer
 
 from data_connectors.appflow_pull_stack import AppFlowPullStack
-from data_connectors.orchestration.async_callback_construct import AsyncCallbackConstruct
 from data_connectors.orchestration.stepfunctions.workflows.salesforce_workflow import SalesforceWorkflow
 
 
@@ -469,7 +468,7 @@ class SalesforceMarketingCloudStack(AppFlowPullStack):
     def add_cdk_nag_suppressions(self):
         nag_suppression_reason_for_wildcard_permissions = "The IAM entity contains wildcard permissions"
         for path in [
-            "/SalesforceMarketingCloudStack/BucketNotificationsHandler050a0587b7544547bf325f094a3db834/Role/Resource",
+            f"/SalesforceMarketingCloudStack/BucketNotificationsHandler050a0587b7544547bf325f094a3db834/Role/Resource",
         ]:
             NagSuppressions.add_resource_suppressions_by_path(
                 self,
@@ -578,10 +577,6 @@ class SalesforceMarketingCloudStack(AppFlowPullStack):
         )
 
     def create_workflow_deferred(self):
-        async_callback_construct = AsyncCallbackConstruct(
-            self, "SalesforceWorkflowOrchestration",
-            self.transform.recipe_job_name)
-
         self.appflow_launch_state_machine_name = f"{Aws.STACK_NAME}-AppflowLaunch"
         return SalesforceWorkflow(
             self, "SalesforceWorkflow",
@@ -593,7 +588,6 @@ class SalesforceMarketingCloudStack(AppFlowPullStack):
             self.transform.dataset_name, self.transform.
             transform_recipe_file_location_parameter.value_as_string,
             self.transform.recipe_job_name,
-            async_callback_construct.brew_run_job_lambda,
             self.sns_topic,
             self.dynamodb_table,
             self.transform.recipe_lambda_custom_resource_function,
