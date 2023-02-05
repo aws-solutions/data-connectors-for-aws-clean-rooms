@@ -45,7 +45,7 @@ class AutomaticDatabrewJobLaunch:
             s3.EventType.OBJECT_CREATED,
             s3n.LambdaDestination(self.lambda_process_s3_notification),
             s3.NotificationKeyFilter(
-                prefix="inbound/"
+                prefix=stack.connector_buckets.inbound_bucket_prefix
             )
         )
 
