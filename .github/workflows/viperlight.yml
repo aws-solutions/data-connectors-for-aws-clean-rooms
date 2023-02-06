@@ -4,8 +4,8 @@ name: "Viperlight"
 on: [push, pull_request]
 
 jobs:
-  pull-request-job:
-    name: Status Checks
+  content-scan:
+    name: Content Scan
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
