@@ -15,4 +15,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Inbound bucket prefix incorrectly applied for automatic trigger in AppFlow stack #11
+- [Inbound bucket prefix incorrectly applied for automatic trigger in AppFlow stack](https://github.com/aws-solutions/data-connectors-for-aws-clean-rooms/issues/11)
