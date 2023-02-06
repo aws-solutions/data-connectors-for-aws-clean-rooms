@@ -27,7 +27,7 @@ the AWS Well-Architected Framework.
 
 ## Deployment
 
-You can launch this solution with one click from [AWS Solutions Implementations](https://aws.amazon.com/solutions/implementations/). 
+You can launch this solution with one click from the AWS Solutions [landing page](https://aws.amazon.com/solutions/implementations/data-connectors-for-aws-clean-rooms/). 
 
 To customize the solution, or to contribute to the solution, see [Creating a custom build](#creating-a-custom-build)
 
