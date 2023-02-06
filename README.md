@@ -27,7 +27,7 @@ the AWS Well-Architected Framework.
 
 ## Deployment
 
-You can launch this solution with one click from [AWS Solutions Implementations](https://aws.amazon.com/solutions/implementations/). 
+You can launch this solution with one click from the AWS Solutions [landing page](https://aws.amazon.com/solutions/implementations/data-connectors-for-aws-clean-rooms/). 
 
 To customize the solution, or to contribute to the solution, see [Creating a custom build](#creating-a-custom-build)
 
@@ -132,7 +132,7 @@ After running the command, you can deploy the template:
 
 ## Collection of operational metrics
 This solution collects anonymous operational metrics to help AWS improve the quality of features of the solution.
-For more information, including how to disable this capability, please see the [implementation guide](https://docs.aws.amazon.com/solutions/latest/TBD/collection-of-operational-metrics.html).
+For more information, including how to disable this capability, please see the [implementation guide](https://docs.aws.amazon.com/solutions/latest/data-connectors-for-aws-clean-rooms/operational-metrics.html).
  
 ***
 
