@@ -1,8 +1,7 @@
-name: Pull Request Workflow
 
-on: 
-  pull_request:
-    types: [opened, edited, reopened, synchronize]
+name: "Viperlight"
+
+on: [push, pull_request]
 
 jobs:
   pull-request-job:
