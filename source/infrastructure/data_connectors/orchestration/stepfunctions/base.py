@@ -18,6 +18,7 @@ from constructs import Construct
 from aws_cdk import Aws, Fn
 from aws_cdk.aws_logs import LogGroup
 from cdk_nag import NagSuppressions
+from data_connectors.orchestration.async_callback_construct import AsyncCallbackConstruct
 
 
 class WorkflowOrchestrator(Construct):
@@ -32,7 +33,6 @@ class WorkflowOrchestrator(Construct):
             dataset_name,
             recipe_bucket,
             recipe_job_name,
-            brew_lambda,
             sns_topic,
             dynamodb_table,
             recipe_lambda_custom_resource,
@@ -46,29 +46,38 @@ class WorkflowOrchestrator(Construct):
         self.dataset_name = dataset_name
         self.recipe_bucket = recipe_bucket
         self.recipe_job_name = recipe_job_name
-        self.brew_lambda = brew_lambda
         self.sns_topic = sns_topic
         self.dynamodb_table = dynamodb_table
         self.recipe_lambda_custom_resource = recipe_lambda_custom_resource
 
+        self.base_state_machine_name = f"{Aws.STACK_NAME}-S3TriggerDatabrewJob-Runner"
+
         super().__init__(scope, id)
 
+        self.async_callback_construct = AsyncCallbackConstruct(
+            self, "WorkflowOrchestration", self.recipe_job_name, self.base_state_machine_name,
+        )
+
+        self.state_machine = self.create_base_workflow()
+
+        # Prevent workflow is triggered by the sample file in the inbound bucket on create
+        self.state_machine.node.add_dependency(self.recipe_lambda_custom_resource)
+        self.state_machine.node.add_dependency(self.async_callback_construct)
+
+        self.cdk_nag_suppression()
+
+    def create_base_workflow(self):
         log_group_name = f"/aws/vendedlogs/states/{Aws.STACK_NAME}-{Fn.select(2, Fn.split('/', Aws.STACK_ID))}"
-        base_state_machine_name = f"{Aws.STACK_NAME}-S3TriggerDatabrewJob-Runner"
-        self.state_machine = sfn.StateMachine(
+
+        return sfn.StateMachine(
             self,
             "S3TriggerDatabrewRunner",
             tracing_enabled=True,
-            state_machine_name=base_state_machine_name,
+            state_machine_name=self.base_state_machine_name,
             definition=self.chain,
             logs=sfn.LogOptions(level=sfn.LogLevel.ALL,
                                 destination=LogGroup(self, 'SFNLogGroup', log_group_name=log_group_name))
         )
-
-        # Prevent workflow is triggered by the sample file in the inbound bucket on create
-        self.state_machine.node.add_dependency(self.recipe_lambda_custom_resource)
-
-        self.cdk_nag_suppression()
 
     @property
     def chain(self) -> sfn.Chain:
@@ -118,7 +127,7 @@ class WorkflowOrchestrator(Construct):
 
         return tasks.LambdaInvoke(
             self, 'Launch Databrew Job',
-            lambda_function=self.brew_lambda,
+            lambda_function=self.async_callback_construct.brew_run_job_lambda,
             integration_pattern=sfn.IntegrationPattern.WAIT_FOR_TASK_TOKEN,
             payload=sfn.TaskInput.from_object(
                 {
@@ -162,6 +171,16 @@ class WorkflowOrchestrator(Construct):
                     "id": 'AwsSolutions-IAM5',
                     "reason": nag_suppresion_reason,
                     "appliesTo": ["Resource::<SalesforceWorkflowOrchestrationBrewRunJobC2FF95FB.Arn>:*"]
+                },
+                {
+                    "id": 'AwsSolutions-IAM5',
+                    "reason": nag_suppresion_reason,
+                    "appliesTo": ["Resource::<SalesforceWorkflowWorkflowOrchestrationBrewRunJob55408E3A.Arn>:*"]
+                },
+                {
+                    "id": 'AwsSolutions-IAM5',
+                    "reason": nag_suppresion_reason,
+                    "appliesTo": ["Resource::<WorkflowOrchestratorWorkflowOrchestrationBrewRunJob4557B9A3.Arn>:*"]
                 },
             ],
         )

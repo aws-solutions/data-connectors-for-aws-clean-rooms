@@ -33,12 +33,14 @@ class AsyncCallbackConstruct(Construct):
         scope: Construct,
         id: str,
         job_name: str,
+        workflow_name: str,
         *args,
         **kwargs,
     ):
 
         super().__init__(scope, id)
         self.job_name = job_name
+        self.workflow_name = workflow_name
 
         self.brew_run_job_lambda = SolutionsPythonFunction(
             self,
@@ -109,23 +111,25 @@ class AsyncCallbackConstruct(Construct):
             ),
         )
 
+        self.attach_policy_to_role()
         self.cdk_nag_suppressions()
 
-    def cdk_nag_suppressions(self):
-
+    def attach_policy_to_role(self):
         stack_region: str = Aws.REGION
         stack_account: str = Aws.ACCOUNT_ID
-        lambda_brew_run_policy = iam.Policy(
+        self.lambda_brew_run_policy = iam.Policy(
             self,
             "LambdaBrewRunPolicy",
             statements=[
                 iam.PolicyStatement(
                     effect=iam.Effect.ALLOW,
                     actions=[
-                        "states:sendTaskFailure",
+                        "states:SendTaskFailure",
                         "states:SendTaskHeartbeat",
                     ],
-                    resources=["*"],
+                    resources=[
+                        f"arn:aws:states:{stack_region}:{stack_account}:stateMachine:{self.workflow_name}",
+                    ],
                 ),
                 iam.PolicyStatement(
                     effect=iam.Effect.ALLOW,
@@ -144,17 +148,19 @@ class AsyncCallbackConstruct(Construct):
             ],
         )
 
-        lambda_callback_policy = iam.Policy(
+        self.lambda_callback_policy = iam.Policy(
             self,
             "LambdaCallbackPolicy",
             statements=[
                 iam.PolicyStatement(
                     effect=iam.Effect.ALLOW,
                     actions=[
-                        "states:sendTaskFailure",
+                        "states:SendTaskFailure",
                         "states:SendTaskSuccess",
                     ],
-                    resources=["*"],
+                    resources=[
+                        f"arn:aws:states:{stack_region}:{stack_account}:stateMachine:{self.workflow_name}",
+                    ],
                 ),
                 iam.PolicyStatement(
                     effect=iam.Effect.ALLOW,
@@ -166,8 +172,10 @@ class AsyncCallbackConstruct(Construct):
             ],
         )
 
-        lambda_brew_run_policy.attach_to_role(self.brew_run_job_lambda.role)
-        lambda_callback_policy.attach_to_role(self.callback_lambda_function.role)
+        self.lambda_brew_run_policy.attach_to_role(self.brew_run_job_lambda.role)
+        self.lambda_callback_policy.attach_to_role(self.callback_lambda_function.role)
+
+    def cdk_nag_suppressions(self):
 
         list_of_cdk_nags_to_suppress = [{
                     "id": 'AwsSolutions-IAM5',
@@ -186,7 +194,7 @@ class AsyncCallbackConstruct(Construct):
                 ]
 
         for func_ in [self.brew_run_job_lambda, self.callback_lambda_function,
-                      lambda_callback_policy, lambda_brew_run_policy]:
+                      self.lambda_callback_policy, self.lambda_brew_run_policy]:
 
             NagSuppressions.add_resource_suppressions(
                 func_.role if hasattr(func_ ,"role") else func_,

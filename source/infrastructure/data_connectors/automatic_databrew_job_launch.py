@@ -121,7 +121,10 @@ class AutomaticDatabrewJobLaunch:
         dynamodb_table_statement = iam.PolicyStatement(
             effect=iam.Effect.ALLOW,
             actions=[
-                "dynamodb:*",
+                 "dynamodb:PutItem",
+                 "dynamodb:Query",
+                 "dynamodb:UpdateItem",
+                 "dynamodb:GetItem",
             ],
             resources=[
                 f"arn:aws:dynamodb:*:{stack_account}:table/{dynamodb_table_name}/stream/*",
