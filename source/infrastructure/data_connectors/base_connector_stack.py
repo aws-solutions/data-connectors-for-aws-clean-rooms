@@ -26,7 +26,7 @@ from aws_solutions.cdk.stack import SolutionStack
 from data_connectors.connector_buckets import ConnectorBuckets
 from data_connectors.transform.databrew_transform import DataBrewTransform
 from data_connectors.automatic_databrew_job_launch import AutomaticDatabrewJobLaunch
-from data_connectors.orchestration.stepfunctions.base import WorkflowOrchestrator
+from data_connectors.orchestration.stepfunctions.workflow_orchestrator import WorkflowOrchestrator
 
 
 class BaseConnectorStack(SolutionStack):

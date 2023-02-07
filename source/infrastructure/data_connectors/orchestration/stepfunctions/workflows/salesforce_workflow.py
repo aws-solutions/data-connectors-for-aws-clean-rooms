@@ -21,7 +21,7 @@ from aws_cdk.aws_logs import LogGroup
 from cdk_nag import NagSuppressions
 from constructs import Construct
 
-from data_connectors.orchestration.stepfunctions.base import WorkflowOrchestrator
+from data_connectors.orchestration.stepfunctions.workflow_orchestrator import WorkflowOrchestrator
 
 
 class SalesforceWorkflow(WorkflowOrchestrator):
