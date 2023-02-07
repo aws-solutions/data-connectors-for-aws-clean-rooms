@@ -468,7 +468,7 @@ class SalesforceMarketingCloudStack(AppFlowPullStack):
     def add_cdk_nag_suppressions(self):
         nag_suppression_reason_for_wildcard_permissions = "The IAM entity contains wildcard permissions"
         for path in [
-            f"/SalesforceMarketingCloudStack/BucketNotificationsHandler050a0587b7544547bf325f094a3db834/Role/Resource",
+            "/SalesforceMarketingCloudStack/BucketNotificationsHandler050a0587b7544547bf325f094a3db834/Role/Resource",
         ]:
             NagSuppressions.add_resource_suppressions_by_path(
                 self,
