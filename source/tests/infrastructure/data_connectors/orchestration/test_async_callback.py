@@ -27,6 +27,9 @@ def mock_solution():
     return CDKSolution(cdk_json_path=path)
 
 
+workflow_name = "UnitTestWorkflow"
+
+
 @pytest.fixture(scope="module")
 def synth_template(mock_solution):
     app = cdk.App(context=mock_solution.context.context)
@@ -35,7 +38,7 @@ def synth_template(mock_solution):
                           description="Empty Stack for Testing",
                           template_filename="test-async-callback.template")
 
-    AsyncCallbackConstruct(stack, "TestAsyncCallback", job_name="UnitTest")
+    AsyncCallbackConstruct(stack, "TestAsyncCallback", job_name="UnitTestJob", workflow_name=workflow_name)
     synth_template = Template.from_stack(stack)
     yield synth_template
 
@@ -48,7 +51,7 @@ def test_lambda_dbb_function_creation(synth_template):
         {
             "Handler": "lambda_function.handler",
             "Description":
-            "This function read dynamodb table and send token back to step function",
+                "This function read dynamodb table and send token back to step function",
             "Role": {
                 "Fn::GetAtt": [role_definition_capture, "Arn"]
             },
@@ -72,10 +75,10 @@ def test_lambda_dbb_function_creation(synth_template):
                         "dynamodb:DescribeTable"
                     ],
                     "Effect":
-                    "Allow",
+                        "Allow",
                 }],
                 "Version":
-                "2012-10-17"
+                    "2012-10-17"
             },
         })
 
@@ -90,10 +93,10 @@ def test_lambda_dbb_function_creation(synth_template):
                         "dynamodb:ConditionCheckItem", "dynamodb:DescribeTable"
                     ],
                     "Effect":
-                    "Allow",
+                        "Allow",
                 }],
                 "Version":
-                "2012-10-17"
+                    "2012-10-17"
             },
         })
 
@@ -118,21 +121,20 @@ def test_lambda_dbb_function_creation(synth_template):
         },
     )
     assert synth_template.to_json()["Resources"][
-        ddb_defintion_capture.as_string()]["Type"] == "AWS::DynamoDB::Table"
+               ddb_defintion_capture.as_string()]["Type"] == "AWS::DynamoDB::Table"
 
 
 def test_lambda_brew_run_policy(synth_template):
+    resource_capture = Capture()
     synth_template.has_resource_properties(
         "AWS::IAM::Policy",
         {
             "PolicyDocument": {
                 "Statement": [{
                     "Action":
-                    ["states:sendTaskFailure", "states:SendTaskHeartbeat"],
-                    "Effect":
-                    "Allow",
-                    "Resource":
-                    "*"
+                        ["states:SendTaskFailure", "states:SendTaskHeartbeat"],
+                    "Effect": "Allow",
+                    "Resource": resource_capture
                 }, {
                     "Action": "databrew:*",
                     "Effect": "Allow",
@@ -141,33 +143,35 @@ def test_lambda_brew_run_policy(synth_template):
                     "Effect": "Allow",
                 }],
                 "Version":
-                "2012-10-17"
+                    "2012-10-17"
             },
         },
     )
 
+    assert workflow_name in str(resource_capture.as_object().values())
+
 
 def test_lambda_callback_policy(synth_template):
+    resource_capture = Capture()
     synth_template.has_resource_properties(
         "AWS::IAM::Policy",
         {
             "PolicyDocument": {
                 "Statement":
-                Match.array_with([{
-                    "Action": [
-                        "states:sendTaskFailure",
-                        "states:SendTaskSuccess",
-                    ],
-                    "Effect":
-                    "Allow",
-                    "Resource":
-                    "*",
-                }]),
+                    Match.array_with([{
+                        "Action": [
+                            "states:SendTaskFailure",
+                            "states:SendTaskSuccess",
+                        ],
+                        "Effect": "Allow",
+                        "Resource": resource_capture,
+                    }]),
                 "Version":
-                "2012-10-17",
+                    "2012-10-17",
             }
         },
     )
+    assert workflow_name in str(resource_capture.as_object().values())
 
 
 def test_trigger_lambda_after_brew(synth_template):
