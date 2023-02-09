@@ -144,11 +144,26 @@ class WorkflowOrchestrator(Construct):
         """
         Function to run the tasks to publish the outcome of the step function
         """
+        message_attributes = {
+            'Source': tasks.MessageAttribute(
+                data_type=tasks.MessageAttributeDataType.STRING,
+                value='DataBrew'
+            ),
+            'Cause': tasks.MessageAttribute(
+                data_type=tasks.MessageAttributeDataType.STRING,
+                value='DataBrew job is Launched'
+            ),
+            'PipelineResult': tasks.MessageAttribute(
+                data_type=tasks.MessageAttributeDataType.STRING,
+                value=sfn.JsonPath.string_at("$.status"),
+            )
+        }
         return tasks.SnsPublish(
             self, "Databrew Job Done Notification",
             topic=self.sns_topic,
             integration_pattern=sfn.IntegrationPattern.REQUEST_RESPONSE,
-            message=sfn.TaskInput.from_text("Databrew Job is Done and Orchestration Completed."),
+            message=sfn.TaskInput.from_text("Databrew Job is Launched and Orchestration Completed."),
+            message_attributes=message_attributes,
             subject=sfn.JsonPath.format(
                 "Data Connectors for AWS Clean Rooms Notifications: Pipeline result [{}]",
                 sfn.JsonPath.string_at("$.status"))
@@ -156,17 +171,31 @@ class WorkflowOrchestrator(Construct):
 
     def publish_brew_job_fail_notification(self):
         brew_job_fail_message = sfn.JsonPath.format(
-            "Data Connectors for AWS Clean Rooms Notifications: Databrew Job is Fail and another job is running, "
-            "Error {}, Cause {}",
+            "Data Connectors for AWS Clean Rooms Notifications: Databrew Job is Fail, Error: {}, Cause: {}",
             sfn.JsonPath.string_at("$.Error"),
             sfn.JsonPath.string_at("$.Cause")
         )
+        message_attributes = {
+            'Source': tasks.MessageAttribute(
+                data_type=tasks.MessageAttributeDataType.STRING,
+                value='DataBrew'
+            ),
+            'Cause': tasks.MessageAttribute(
+                data_type=tasks.MessageAttributeDataType.STRING,
+                value=sfn.JsonPath.string_at("$.Cause")
+            ),
+            'PipelineResult': tasks.MessageAttribute(
+                data_type=tasks.MessageAttributeDataType.STRING,
+                value="Fail",
+            )
+        }
         return tasks.SnsPublish(
             self,
             "Databrew Job Fail Notification",
             topic=self.sns_topic,
             integration_pattern=sfn.IntegrationPattern.REQUEST_RESPONSE,
             message=sfn.TaskInput.from_text(brew_job_fail_message),
+            message_attributes=message_attributes,
             subject="Data Connectors for AWS Clean Rooms Notifications: Pipeline result [Fail]"
         )
 

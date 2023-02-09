@@ -24,6 +24,7 @@ logger = Logger(utc=True)
 DDB_TABLE_NAME = "DDB_TABLE_NAME"
 TTL_EXPIRY_PERIOD = 7
 
+
 def verify_env_setup():
     if not (os.environ.get(DDB_TABLE_NAME)):
         err_msg = f"The lambda requires {DDB_TABLE_NAME} environment variable to be configured. One or more of these environment varialbes have not been configured"
@@ -31,13 +32,14 @@ def verify_env_setup():
         return False
     return True
 
-def handler(event, _):
 
+def handler(event, _):
     task_token = event["task_token"]
     exp_time = int((timedelta(days=TTL_EXPIRY_PERIOD) + datetime.fromtimestamp(int(time.time()))).timestamp())
     if not verify_env_setup():
-        stepfunctions.send_task_failure("", task_token)
-        raise ValueError("Cannot Verify the environment Variables for the lambda")
+        error = ValueError("Cannot Verify the environment Variables for the lambda")
+        stepfunctions.send_task_failure(error, task_token)
+        raise error
 
     stepfunctions.send_heart_beat(task_token)
 
@@ -50,17 +52,18 @@ def handler(event, _):
         job_name = event["brew_job_name"]
         response = data_brew_client.start_job_run(Name=job_name)
         job_id = response["RunId"]
-        ddb_table.put_item(Item={"job_id": job_id, 
+        ddb_table.put_item(Item={"job_id": job_id,
                                  "task_token": task_token,
                                  "exp_timestamp": exp_time})
-        
+
         logger.info(f"Task token of the following databrew job '{job_name}' with job id '{job_id}'"
-                    f" is updated in the following {DDB_TABLE_NAME}")                              
+                    f" is updated in the following {DDB_TABLE_NAME}")
 
     except Exception as err:
         logger.error(err)
-        stepfunctions.send_task_failure("", task_token)
+        stepfunctions.send_task_failure(err, task_token)
         raise err
+
     stepfunctions.send_heart_beat(task_token)
 
     return {"brew_job_run_id": response["RunId"]}
