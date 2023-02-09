@@ -11,7 +11,7 @@
 #  the specific language governing permissions and limitations under the License.                                      #
 # ######################################################################################################################
 """
-This module is a custom lambda for string manipulation
+This module is a custom lambda for string manipulation to lower case
 """
 
 from aws_lambda_powertools import Logger

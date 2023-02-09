@@ -89,6 +89,14 @@ class DataBrewTransform:
 
         create_recipe_job_ref_project(self, stack, transform_bucket_name, transform_bucket_prefix, databrew_iam_role.role_arn, job_encryption_key.key_arn)
 
+        create_object_remove_lambda_resource(self, stack, inbound_bucket_name, inbound_bucket_prefix)
+
+        custom_lambda_resource_function_nag_suppression(
+            self.string_lambda_custom_resource_function, 
+            self.recipe_lambda_custom_resource_function, 
+            self.object_remove_lambda_custom_resource_function
+        )
+
         create_stack_outputs(self, stack)
 
 
@@ -169,16 +177,11 @@ def create_databrew_iam_role(self, stack, inbound_bucket_arn, transform_bucket_a
 
 
 def create_recipe_lambda_resource(self, stack, inbound_bucket_name, inbound_bucket_prefix, stack_region, stack_account_id) -> None:
-
     policy_statements: list[iam.PolicyStatement] = create_policy_statements_for_custom_lambda(self, stack, stack_region, stack_account_id,
                                                                                                 inbound_bucket_name, inbound_bucket_prefix)
-
     self.recipe_lambda_iam_policy = iam.Policy(stack, "RecipeLambdaIamPolicy", statements=policy_statements)
-
     create_recipe_lambda_custom_function(self, stack, self.recipe_lambda_iam_policy)
-
     create_recipe_lambda_custom_resource(self, stack, inbound_bucket_name, inbound_bucket_prefix)
-
     recipe_policy_apply_nag_suppresions(self.recipe_lambda_iam_policy)
 
 
@@ -190,16 +193,15 @@ def create_string_lambda_resource(self, stack, input_string):
 
 def create_string_lambda_custom_function(self, stack):
     """
-    This function is responsible for creating the Python function resource used by the
-    custom resource to manipulate strings
+    This function is responsible for string manipulation to lower case
     """
     self.string_lambda_custom_resource_function = SolutionsPythonFunction(
         stack,
         "StringCustomLambdaFunction",
-        LAMBDA_PATH / "custom_resource" / "string_manipulation" / "string_manip.py",
+        LAMBDA_PATH / "custom_resource" / "string_tolower" / "string_tolower.py",
         "event_handler",
         runtime=lambdaf.Runtime.PYTHON_3_9,
-        description="Lambda function for custom resource for connector profiles",
+        description="Lambda function for string manipulation to lower case",
         timeout=Duration.minutes(1),
         memory_size=256,
         architecture=lambdaf.Architecture.ARM_64,
@@ -212,24 +214,14 @@ def create_string_lambda_custom_function(self, stack):
     self.string_lambda_custom_resource_function.add_environment(
         "SOLUTION_VERSION", stack.node.try_get_context("SOLUTION_VERSION")
     )
-    NagSuppressions.add_resource_suppressions(
-        self.string_lambda_custom_resource_function.role.node.default_child,
-        [
-            {
-                "id": 'AwsSolutions-IAM5',
-                "reason": '* Resource needed by logs',
-                "appliesTo": ["Resource::arn:<AWS::Partition>:logs:<AWS::Region>:<AWS::AccountId>:log-group:/aws/lambda/*"]
-            },
-        ]
-    )
 
 
 def create_string_lambda_custom_resource(self, stack, input_string):
     """
-    This function creates the custom resource used for string manipulation
+    This function creates the custom resource used for string manipulation to lower case
     """
     self.string_lambda_custom_resource = CustomResource(stack,
-        "StringManipulationCustomResource",
+        "StringTolowerCustomResource",
         service_token=self.string_lambda_custom_resource_function.function_arn,
         properties={
             "input_string": input_string
@@ -237,11 +229,81 @@ def create_string_lambda_custom_resource(self, stack, input_string):
     )
 
 
+def create_object_remove_lambda_resource(self, stack, inbound_bucket_name, inbound_bucket_prefix) -> None:
+    policy_statements: list[iam.PolicyStatement] = create_policy_statements_for_object_remove_lambda(inbound_bucket_name, inbound_bucket_prefix)
+    self.object_remove_lambda_iam_policy = iam.Policy(stack, "ObjectRemoveLambdaIamPolicy", statements=policy_statements)
+    object_remove_lambda_custom_function(self, stack, self.object_remove_lambda_iam_policy)
+    object_remove_lambda_custom_resource(self, stack, inbound_bucket_name, inbound_bucket_prefix)
+    object_remove_policy_apply_nag_suppresions(self.object_remove_lambda_iam_policy)
+
+
+def create_policy_statements_for_object_remove_lambda(inbound_bucket_name, inbound_bucket_prefix) -> list[iam.PolicyStatement]:
+    databrew_inbound_bucket_prefix_statement = iam.PolicyStatement(
+        effect=iam.Effect.ALLOW,
+        actions=[
+            "s3:ListObject",
+            "s3:GetObject",
+            "s3:DeleteObject"
+        ],
+        resources=[
+            f"arn:aws:s3:::{inbound_bucket_name}/{inbound_bucket_prefix}*",
+        ]
+    )
+
+    return [
+        databrew_inbound_bucket_prefix_statement
+    ]
+
+
+def object_remove_lambda_custom_function(self, stack, object_remove_lambda_iam_policy):
+    """
+    This function is responsible for removing the empty object file placed in the inbound bucket 
+    """
+    self.object_remove_lambda_custom_resource_function = SolutionsPythonFunction(
+        stack,
+        "ObjectRemoveCustomLambdaFunction",
+        LAMBDA_PATH / "custom_resource" / "remove_placeholder" / "remove_placeholder.py",
+        "event_handler",
+        runtime=lambdaf.Runtime.PYTHON_3_9,
+        description="Lambda function for removing the empty object file placed in the inbound bucket ",
+        timeout=Duration.minutes(1),
+        memory_size=256,
+        architecture=lambdaf.Architecture.ARM_64,
+        layers=[PowertoolsLayer.get_or_create(stack),
+                SolutionsLayer.get_or_create(stack)],
+    )
+    self.object_remove_lambda_custom_resource_function.add_environment(
+        "SOLUTION_ID", stack.node.try_get_context("SOLUTION_ID")
+    )
+    self.object_remove_lambda_custom_resource_function.add_environment(
+        "SOLUTION_VERSION", stack.node.try_get_context("SOLUTION_VERSION")
+    )
+    object_remove_lambda_iam_policy.attach_to_role(self.object_remove_lambda_custom_resource_function.role)
+
+
+def object_remove_lambda_custom_resource(self, stack, inbound_bucket_name, inbound_bucket_prefix):
+    """
+    This function creates the custom resource used for object_remove_lambda_custom_function
+    """
+    self.object_remove_lambda_custom_resource = CustomResource(stack,
+        "ObjectRemoveCustomResource",
+        service_token=self.object_remove_lambda_custom_resource_function.function_arn,
+         properties={
+            "inbound_bucket_name": inbound_bucket_name,
+            "inbound_bucket_prefix": inbound_bucket_prefix
+        },
+    )
+    self.object_remove_lambda_custom_resource.node.add_dependency(self.object_remove_lambda_iam_policy)
+    self.object_remove_lambda_custom_resource.node.add_dependency(self.recipe_lambda_custom_resource)
+    self.object_remove_lambda_custom_resource.node.add_dependency(self.cfn_project)
+    self.object_remove_lambda_custom_resource.node.add_dependency(self.cfn_job_profile_type)
+
+
 def create_transform_template_parameters(self, stack) -> None:
     group_name = "Transform"
     self.transform_recipe_file_location_parameter = CfnParameter(stack,
         "TransformRecipeFileLocation",
-        description="S3 location of recipe file (json) e.g. folder/recipe.json",
+        description="S3 location of recipe file (json) E.g. s3_folder/recipe.json",
         default="",
     )
     stack.solutions_template_options.add_parameter(
@@ -326,7 +388,7 @@ def create_glue_table(self, stack, transform_bucket_name, transform_bucket_prefi
             }
         )
     )
-    self.cfn_glue_table.add_depends_on(self.cfn_glue_database)
+    self.cfn_glue_table.add_dependency(self.cfn_glue_database)
 
 
 def create_dataset_for_transform(self, stack, inbound_bucket_name, inbound_bucket_prefix) -> None:
@@ -556,7 +618,7 @@ def create_profile_job_for_dataset(self, stack, transform_bucket_name, transform
             )
         )
     )
-    self.cfn_job_profile_type.add_depends_on(self.cfn_dataset)
+    self.cfn_job_profile_type.add_dependency(self.cfn_dataset)
     self.cfn_job_profile_type.node.add_dependency(self.recipe_lambda_custom_resource)
 
 
@@ -617,8 +679,8 @@ def create_policy_statements_for_custom_lambda(self, stack, stack_region, stack_
 
 def create_recipe_lambda_custom_function(self, stack, recipe_lambda_policy):
     """
-    This function is responsible for creating the Python function resource used by the
-    custom resource to create/update/delete the databrew recipe based on TransformRecipeFileLocation.
+    This function is responsible for creating/updating/deleting the databrew recipe
+    based on TransformRecipeFileLocation.
     Additionally places a sample file in the inbound bucket on create
     """
 
@@ -628,7 +690,7 @@ def create_recipe_lambda_custom_function(self, stack, recipe_lambda_policy):
         LAMBDA_PATH / "custom_resource" / "transform" / "recipe_from_s3.py",
         "event_handler",
         runtime=lambdaf.Runtime.PYTHON_3_9,
-        description="Lambda function for custom resource for connector profiles",
+        description="Lambda function for custom resource for creating/updating/deleting the databrew recipe",
         timeout=Duration.minutes(5),
         memory_size=256,
         architecture=lambdaf.Architecture.ARM_64,
@@ -642,16 +704,6 @@ def create_recipe_lambda_custom_function(self, stack, recipe_lambda_policy):
         "SOLUTION_VERSION", stack.node.try_get_context("SOLUTION_VERSION")
     )
     recipe_lambda_policy.attach_to_role(self.recipe_lambda_custom_resource_function.role)
-    NagSuppressions.add_resource_suppressions(
-        self.recipe_lambda_custom_resource_function.role.node.default_child,
-        [
-            {
-                "id": 'AwsSolutions-IAM5',
-                "reason": '* Resource needed by logs',
-                "appliesTo": ["Resource::arn:<AWS::Partition>:logs:<AWS::Region>:<AWS::AccountId>:log-group:/aws/lambda/*"]
-            },
-        ]
-    )
 
 
 def create_recipe_lambda_custom_resource(self, stack, inbound_bucket_name, inbound_bucket_prefix):
@@ -692,7 +744,7 @@ def create_recipe_job_ref_project(self, stack, transform_bucket_name, transform_
             )
         )]
     )
-    self.cfn_job_recipe_type.add_depends_on(self.cfn_project)
+    self.cfn_job_recipe_type.add_dependency(self.cfn_project)
 
 
 def create_project_with_recipe(self, stack, role_arn) -> None:
@@ -719,7 +771,6 @@ def create_stack_outputs(self, stack) -> None:
 
 def databrew_role_apply_nag_suppressions(databrew_iam_role) -> None:
     nag_suppression_reason = "IAM entity contains wildcard permissions"
-
     NagSuppressions.add_resource_suppressions(
         databrew_iam_role,
         [
@@ -854,3 +905,31 @@ def recipe_policy_apply_nag_suppresions(recipe_lambda_iam_policy) -> None:
             }
         ],
     )
+
+
+def object_remove_policy_apply_nag_suppresions(object_remove_lambda_iam_policy):
+    NagSuppressions.add_resource_suppressions(
+        object_remove_lambda_iam_policy,
+        [
+            {
+                "id": 'AwsSolutions-IAM5',
+                "reason": "IAM entity contains wildcard permissions",
+                "appliesTo": ['Resource::arn:aws:s3:::<inboundbucketFA352838>/{"Fn::If":["InboundBucketPrefixCondition","inbound/",{"Fn::Join":["",[{"Ref":"AWS::StackName"},"-flow/"]]}]}*']
+            },
+        ]
+    )
+
+
+def custom_lambda_resource_function_nag_suppression(*custom_lambda_resource_functions) -> None:
+    for custom_lambda_resource_function in custom_lambda_resource_functions:
+        NagSuppressions.add_resource_suppressions(
+            custom_lambda_resource_function.role.node.default_child,
+            [
+                {
+                    "id": 'AwsSolutions-IAM5',
+                    "reason": '* Resource needed by logs',
+                    "appliesTo": ["Resource::arn:<AWS::Partition>:logs:<AWS::Region>:<AWS::AccountId>:log-group:/aws/lambda/*"]
+                }
+            ]
+        )
+        

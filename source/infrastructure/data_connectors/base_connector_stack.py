@@ -82,7 +82,7 @@ class BaseConnectorStack(SolutionStack):
             self,
             id="NotificationEmail",
             type="String",
-            description="Email to notify with Orchestration results",
+            description="Email to notify with results E.g. alice@example.com",
             default="",
             max_length=50,
             allowed_pattern=r"(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$|^$)",
