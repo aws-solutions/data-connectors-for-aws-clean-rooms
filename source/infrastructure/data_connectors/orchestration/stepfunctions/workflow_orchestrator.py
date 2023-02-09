@@ -144,25 +144,13 @@ class WorkflowOrchestrator(Construct):
         """
         Function to run the tasks to publish the outcome of the step function
         """
-        message_attributes = {
-            'Source': tasks.MessageAttribute(
-                data_type=tasks.MessageAttributeDataType.STRING,
-                value='DataBrew'
-            ),
-            'Cause': tasks.MessageAttribute(
-                data_type=tasks.MessageAttributeDataType.STRING,
-                value='DataBrew job is Launched'
-            ),
-            'PipelineResult': tasks.MessageAttribute(
-                data_type=tasks.MessageAttributeDataType.STRING,
-                value=sfn.JsonPath.string_at("$.status"),
-            )
-        }
+        message_attributes = self.create_message_attributes('DataBrew', 'DataBrew job is Launched',
+                                                            sfn.JsonPath.string_at("$.status"))
         return tasks.SnsPublish(
             self, "Databrew Job Done Notification",
             topic=self.sns_topic,
             integration_pattern=sfn.IntegrationPattern.REQUEST_RESPONSE,
-            message=sfn.TaskInput.from_text("Databrew Job is Launched and Orchestration Completed."),
+            message=sfn.TaskInput.from_text("Databrew Job is launched and orchestration completed."),
             message_attributes=message_attributes,
             subject=sfn.JsonPath.format(
                 "Data Connectors for AWS Clean Rooms Notifications: Pipeline result [{}]",
@@ -171,24 +159,11 @@ class WorkflowOrchestrator(Construct):
 
     def publish_brew_job_fail_notification(self):
         brew_job_fail_message = sfn.JsonPath.format(
-            "Data Connectors for AWS Clean Rooms Notifications: Databrew Job is Fail, Error: {}, Cause: {}",
+            "Databrew Job fails to launch, error: {}, cause: {}",
             sfn.JsonPath.string_at("$.Error"),
             sfn.JsonPath.string_at("$.Cause")
         )
-        message_attributes = {
-            'Source': tasks.MessageAttribute(
-                data_type=tasks.MessageAttributeDataType.STRING,
-                value='DataBrew'
-            ),
-            'Cause': tasks.MessageAttribute(
-                data_type=tasks.MessageAttributeDataType.STRING,
-                value=sfn.JsonPath.string_at("$.Cause")
-            ),
-            'PipelineResult': tasks.MessageAttribute(
-                data_type=tasks.MessageAttributeDataType.STRING,
-                value="Fail",
-            )
-        }
+        message_attributes = self.create_message_attributes('DataBrew', sfn.JsonPath.string_at("$.Cause"), "Fail")
         return tasks.SnsPublish(
             self,
             "Databrew Job Fail Notification",
@@ -198,6 +173,22 @@ class WorkflowOrchestrator(Construct):
             message_attributes=message_attributes,
             subject="Data Connectors for AWS Clean Rooms Notifications: Pipeline result [Fail]"
         )
+
+    def create_message_attributes(self, source, cause, pipeline_result):
+        return {
+            'Source': tasks.MessageAttribute(
+                data_type=tasks.MessageAttributeDataType.STRING,
+                value=source
+            ),
+            'Cause': tasks.MessageAttribute(
+                data_type=tasks.MessageAttributeDataType.STRING,
+                value=cause
+            ),
+            'PipelineResult': tasks.MessageAttribute(
+                data_type=tasks.MessageAttributeDataType.STRING,
+                value=pipeline_result
+            )
+        }
 
     def cdk_nag_suppression(self):
         nag_suppresion_reason = "The IAM entity contains wildcard permissions"
