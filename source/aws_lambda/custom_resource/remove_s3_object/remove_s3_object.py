@@ -31,7 +31,7 @@ def event_handler(event, context):
 
 
 @helper.create
-def on_create_or_update(event, _) -> None:
+def on_create(event, _) -> None:
     resource_properties = event["ResourceProperties"]
     s3_client = get_service_client("s3")
     inbound_bucket_name: str = resource_properties["inbound_bucket_name"]
