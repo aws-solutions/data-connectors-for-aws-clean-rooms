@@ -295,7 +295,7 @@ def object_remove_lambda_custom_resource(self, stack, inbound_bucket_name, inbou
     )
     self.object_remove_lambda_custom_resource.node.add_dependency(self.object_remove_lambda_iam_policy)
     self.object_remove_lambda_custom_resource.node.add_dependency(self.recipe_lambda_custom_resource)
-    self.object_remove_lambda_custom_resource.node.add_dependency(self.cfn_project)
+    self.object_remove_lambda_custom_resource.node.add_dependency(self.cfn_job_recipe_type)
     self.object_remove_lambda_custom_resource.node.add_dependency(self.cfn_job_profile_type)
 
 
