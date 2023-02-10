@@ -122,7 +122,7 @@ class WorkflowOrchestrator(Construct):
         """
 
         return tasks.LambdaInvoke(
-            self, 'Launch Databrew Job',
+            self, 'Launch DataBrew Job',
             lambda_function=self.async_callback_construct.brew_run_job_lambda,
             integration_pattern=sfn.IntegrationPattern.WAIT_FOR_TASK_TOKEN,
             payload=sfn.TaskInput.from_object(
@@ -147,10 +147,10 @@ class WorkflowOrchestrator(Construct):
         message_attributes = self.create_message_attributes('DataBrew', 'DataBrew job is Launched',
                                                             sfn.JsonPath.string_at("$.status"))
         return tasks.SnsPublish(
-            self, "Databrew Job Done Notification",
+            self, "DataBrew Job Launch Success Notification",
             topic=self.sns_topic,
             integration_pattern=sfn.IntegrationPattern.REQUEST_RESPONSE,
-            message=sfn.TaskInput.from_text("Databrew Job is launched and orchestration completed."),
+            message=sfn.TaskInput.from_text("DataBrew Job is launched and orchestration completed."),
             message_attributes=message_attributes,
             subject=sfn.JsonPath.format(
                 "Data Connectors for AWS Clean Rooms Notifications: Pipeline result [{}]",
@@ -159,14 +159,14 @@ class WorkflowOrchestrator(Construct):
 
     def publish_brew_job_fail_notification(self):
         brew_job_fail_message = sfn.JsonPath.format(
-            "Databrew Job fails to launch, error: {}, cause: {}",
+            "DataBrew Job fails to launch, error: {}, cause: {}",
             sfn.JsonPath.string_at("$.Error"),
             sfn.JsonPath.string_at("$.Cause")
         )
         message_attributes = self.create_message_attributes('DataBrew', sfn.JsonPath.string_at("$.Cause"), "Fail")
         return tasks.SnsPublish(
             self,
-            "Databrew Job Fail Notification",
+            "DataBrew Job Launch Fail Notification",
             topic=self.sns_topic,
             integration_pattern=sfn.IntegrationPattern.REQUEST_RESPONSE,
             message=sfn.TaskInput.from_text(brew_job_fail_message),
