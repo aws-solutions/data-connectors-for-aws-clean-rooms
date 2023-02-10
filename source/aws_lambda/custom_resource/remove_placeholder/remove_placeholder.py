@@ -50,5 +50,3 @@ def on_create_or_update(event, _) -> None:
         logger.info(f"Deleted {object_key}")
     except s3_client.exceptions.NoSuchKey:
         logger.info(f"{object_key} does not exists")
-
-    
