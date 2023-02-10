@@ -28,7 +28,7 @@ def send_task_success(output: str, task_token: str, service_client: botocore.cli
         service_client.send_task_success(output=output, taskToken=task_token)
     except ClientError as error:
         logger.error(
-            f"Error ocurred when sending task success status for output: {output} and taskToken: {task_token}. Following error occured: {str(error)}. Sending task failure"
+            f"Error ocurred when sending task success status for output: {output} and taskToken: {task_token}. Following error occurred: {str(error)}. Sending task failure"
         )
         send_task_failure(error, task_token, service_client=service_client)
         raise error
@@ -45,7 +45,7 @@ def send_task_failure(error: Exception, task_token: str, service_client: botocor
         )
     except ClientError as cli_error:
         logger.error(
-            f"Failure to send error status to stepfunction for taskToken {task_token}. Following error occured {str(cli_error)}"
+            f"Failure to send error status to stepfunction for taskToken {task_token}. Following error occurred {str(cli_error)}"
         )
         raise cli_error
 
@@ -58,5 +58,5 @@ def send_heart_beat(task_token: str, service_client: botocore.client.BaseClient 
         service_client.send_task_heartbeat(taskToken=task_token)
     except ClientError as cli_error:
         logger.error(
-            f"Error occured when sending heart beat for task {task_token}. Following error occured: {str(cli_error)}. Will not send failure notice"
+            f"Error occured when sending heart beat for task {task_token}. Following error occurred: {str(cli_error)}. Will not send failure notice"
         )
