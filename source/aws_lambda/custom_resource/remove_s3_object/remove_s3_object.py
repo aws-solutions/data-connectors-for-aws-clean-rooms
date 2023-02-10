@@ -39,14 +39,10 @@ def on_create_or_update(event, _) -> None:
     object_key = f"{inbound_bucket_prefix}empty-file-object"
 
     try:
-        s3_client.get_object(
-            Bucket=inbound_bucket_name,
-            Key=object_key
-        )
         s3_client.delete_object(
             Bucket=inbound_bucket_name,
             Key=object_key
         )
         logger.info(f"Deleted {object_key}")
-    except s3_client.exceptions.NoSuchKey:
-        logger.info(f"{object_key} does not exists")
+    except Exception as ex:
+        logger.exception(ex)

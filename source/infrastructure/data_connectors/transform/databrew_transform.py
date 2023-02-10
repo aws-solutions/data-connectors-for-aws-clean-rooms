@@ -262,7 +262,7 @@ def object_remove_lambda_custom_function(self, stack, object_remove_lambda_iam_p
     self.object_remove_lambda_custom_resource_function = SolutionsPythonFunction(
         stack,
         "ObjectRemoveCustomLambdaFunction",
-        LAMBDA_PATH / "custom_resource" / "remove_placeholder" / "remove_placeholder.py",
+        LAMBDA_PATH / "custom_resource" / "remove_s3_object" / "remove_s3_object.py",
         "event_handler",
         runtime=lambdaf.Runtime.PYTHON_3_9,
         description="Lambda function for removing the empty object file placed in the inbound bucket ",
