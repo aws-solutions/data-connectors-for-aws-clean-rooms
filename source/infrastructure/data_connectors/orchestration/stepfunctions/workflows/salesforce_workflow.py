@@ -21,20 +21,27 @@ from aws_cdk.aws_logs import LogGroup
 from cdk_nag import NagSuppressions
 from constructs import Construct
 
-from data_connectors.orchestration.stepfunctions.base import WorkflowOrchestrator
+from data_connectors.orchestration.stepfunctions.workflow_orchestrator import WorkflowOrchestrator
 
 
 class SalesforceWorkflow(WorkflowOrchestrator):
     """Ingests reddit records into S3"""
 
-    def __init__(self, scope: Construct, id: str, connector_update_lambda, appflow_resource, appflow_launch_state_machine_name, *args):
+    def __init__(
+            self,
+            scope: Construct,
+            id: str,
+            connector_update_lambda,
+            appflow_resource,
+            appflow_launch_state_machine_name,
+            *args
+    ):
         self.connector_update_lambda = connector_update_lambda
         self.appflow_resource = appflow_resource
         self.appflow_launch_state_machine_name = appflow_launch_state_machine_name
         super().__init__(scope, id, *args)
 
         log_group_name = f"/aws/vendedlogs/states/{Aws.STACK_NAME}-Appflow-{Fn.select(2, Fn.split('/', Aws.STACK_ID))}"
-
 
         self.appflow_launch_state_machine = sfn.StateMachine(
             self,
@@ -62,7 +69,9 @@ class SalesforceWorkflow(WorkflowOrchestrator):
             parameters={
                 "FlowName": self.appflow_resource.flow_name,
             },
-            iam_resources=["*"],
+            iam_resources=[
+                f"arn:{Aws.PARTITION}:appflow:{Aws.REGION}:{Aws.ACCOUNT_ID}:flow/{self.appflow_resource.flow_name}",
+            ],
         )
 
         return sfn.Chain.start(self.invoke_connector_update_lambda().next(start_appflow))

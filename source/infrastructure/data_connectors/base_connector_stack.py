@@ -26,10 +26,7 @@ from aws_solutions.cdk.stack import SolutionStack
 from data_connectors.connector_buckets import ConnectorBuckets
 from data_connectors.transform.databrew_transform import DataBrewTransform
 from data_connectors.automatic_databrew_job_launch import AutomaticDatabrewJobLaunch
-from data_connectors.orchestration.stepfunctions.base import WorkflowOrchestrator
-from data_connectors.orchestration.async_callback_construct import (
-    AsyncCallbackConstruct,
-)
+from data_connectors.orchestration.stepfunctions.workflow_orchestrator import WorkflowOrchestrator
 
 
 class BaseConnectorStack(SolutionStack):
@@ -127,10 +124,6 @@ class BaseConnectorStack(SolutionStack):
         subclass of the orchestration workflow construct
         Override from BaseConnectorStack
         """
-        async_callback_construct = AsyncCallbackConstruct(
-            self, "WorkflowOrchestration", self.transform.recipe_job_name
-        )
-        
         return WorkflowOrchestrator(
             self,
             "WorkflowOrchestrator",
@@ -139,7 +132,6 @@ class BaseConnectorStack(SolutionStack):
             self.transform.dataset_name,
             self.transform.transform_recipe_file_location_parameter.value_as_string,
             self.transform.recipe_job_name,
-            async_callback_construct.brew_run_job_lambda,
             self.sns_topic,
             self.dynamodb_table,
             self.transform.recipe_lambda_custom_resource,

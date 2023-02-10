@@ -12,7 +12,6 @@
 # ######################################################################################################################
 
 import os
-import sys
 import json
 
 import shared.stepfunctions as stepfunctions
@@ -31,23 +30,26 @@ def verify_env_setup():
         logger.error(err_msg)
         raise ValueError(err_msg)
 
+
 def handler(event, _):
     verify_env_setup()
 
     try:
         job_id = event['detail']['jobRunId']
-        logger.info(f"Querying the dynamodb table {DDB_TABLE_NAME} to retrieve the token for the following job {job_id}")
+        logger.info(
+            f"Querying the dynamodb table {DDB_TABLE_NAME} to retrieve the token for the following job {job_id}")
 
         ddb_client = get_service_resource('dynamodb')
         ddb_table = ddb_client.Table(os.environ["DDB_TABLE_NAME"])
-        response = ddb_table.query(KeyConditionExpression=Key("job_id").\
-                                        eq(job_id))
+        response = ddb_table.query(KeyConditionExpression=Key("job_id"). \
+                                   eq(job_id))
         task_token = response["Items"][0]["task_token"]
     except Exception as err:
         logger.error(f"The following error were found while querying database to "
                      f"retrieve the task_token ==>> {err}")
+        stepfunctions.send_task_failure(err, "")
         raise err
 
-    logger.info("The Token is found and retreived. Communicating with step function to continue...")
+    logger.info("The Token is found and retrieved. Communicating with step function to continue...")
     stepfunctions.send_task_success(json.dumps({"status": "Success",
                                                 "job_run_id": job_id}), task_token)

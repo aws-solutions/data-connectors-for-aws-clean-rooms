@@ -50,8 +50,8 @@ def build_app(context):
             stack.name,
             description=stack.description,
             template_filename=stack.template_filename,
-            synthesizer=synthesizer(),
         )
+        synthesizer().bind(stk)
         Aspects.of(app).add(AwsSolutionsChecks())
         Aspects.of(app).add(AppRegistry(stk, f'AppRegistry-{stack.name}'))
     return app.synth(validate_on_synthesis=True, skip_validation=False)

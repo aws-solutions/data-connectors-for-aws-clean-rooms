@@ -12,12 +12,19 @@
 # ######################################################################################################################
 
 
-from aws_cdk import aws_stepfunctions as sfn
-from aws_cdk import aws_stepfunctions_tasks as tasks
 from constructs import Construct
-from aws_cdk import Aws, Fn
+from aws_cdk import (
+    Aws,
+    Fn,
+    CustomResource,
+    aws_stepfunctions as sfn,
+    aws_stepfunctions_tasks as tasks
+)
+from aws_cdk.aws_sns import Topic
 from aws_cdk.aws_logs import LogGroup
+from aws_cdk.aws_dynamodb import Table
 from cdk_nag import NagSuppressions
+from data_connectors.orchestration.async_callback_construct import AsyncCallbackConstruct
 
 
 class WorkflowOrchestrator(Construct):
@@ -27,15 +34,14 @@ class WorkflowOrchestrator(Construct):
             self,
             scope: Construct,
             id: str,
-            recipe_name,
-            s3_bucket_name,
-            dataset_name,
-            recipe_bucket,
-            recipe_job_name,
-            brew_lambda,
-            sns_topic,
-            dynamodb_table,
-            recipe_lambda_custom_resource,
+            recipe_name: str,
+            s3_bucket_name: str,
+            dataset_name: str,
+            recipe_bucket_name: str,
+            recipe_job_name: str,
+            sns_topic: Topic,
+            dynamodb_table: Table,
+            recipe_lambda_custom_resource: CustomResource,
     ):
         """
         Create a new ingestion workflow
@@ -44,31 +50,40 @@ class WorkflowOrchestrator(Construct):
         self.recipe_name = recipe_name
         self.s3_bucket_name = s3_bucket_name
         self.dataset_name = dataset_name
-        self.recipe_bucket = recipe_bucket
+        self.recipe_bucket_name = recipe_bucket_name
         self.recipe_job_name = recipe_job_name
-        self.brew_lambda = brew_lambda
         self.sns_topic = sns_topic
         self.dynamodb_table = dynamodb_table
         self.recipe_lambda_custom_resource = recipe_lambda_custom_resource
 
+        self.base_state_machine_name = f"{Aws.STACK_NAME}-S3TriggerDatabrewJob-Runner"
+
         super().__init__(scope, id)
 
+        self.async_callback_construct = AsyncCallbackConstruct(
+            self, "WorkflowOrchestration", self.recipe_job_name, self.base_state_machine_name,
+        )
+
+        self.state_machine = self.create_base_workflow()
+
+        # Prevent workflow is triggered by the sample file in the inbound bucket on create
+        self.state_machine.node.add_dependency(self.recipe_lambda_custom_resource)
+        self.state_machine.node.add_dependency(self.async_callback_construct)
+
+        self.cdk_nag_suppression()
+
+    def create_base_workflow(self):
         log_group_name = f"/aws/vendedlogs/states/{Aws.STACK_NAME}-{Fn.select(2, Fn.split('/', Aws.STACK_ID))}"
-        base_state_machine_name = f"{Aws.STACK_NAME}-S3TriggerDatabrewJob-Runner"
-        self.state_machine = sfn.StateMachine(
+
+        return sfn.StateMachine(
             self,
             "S3TriggerDatabrewRunner",
             tracing_enabled=True,
-            state_machine_name=base_state_machine_name,
+            state_machine_name=self.base_state_machine_name,
             definition=self.chain,
             logs=sfn.LogOptions(level=sfn.LogLevel.ALL,
                                 destination=LogGroup(self, 'SFNLogGroup', log_group_name=log_group_name))
         )
-
-        # Prevent workflow is triggered by the sample file in the inbound bucket on create
-        self.state_machine.node.add_dependency(self.recipe_lambda_custom_resource)
-
-        self.cdk_nag_suppression()
 
     @property
     def chain(self) -> sfn.Chain:
@@ -88,7 +103,8 @@ class WorkflowOrchestrator(Construct):
 
         file_uploading_pass = sfn.Pass(self, "File Uploading")
 
-        trigger_data_transform_workflow = self.invoke_lambda_run_brew_jobs().next(self.publish_notification())
+        trigger_data_transform_workflow = self.invoke_lambda_run_brew_jobs() \
+            .next(self.publish_brew_job_done_notification())
 
         choice = sfn.Choice(self, "Check File Upload Status")
         choice.when(sfn.Condition.timestamp_less_than_equals_json_path("$.dynamodb_response.Item.timestamp_str.S",
@@ -100,25 +116,14 @@ class WorkflowOrchestrator(Construct):
 
         return state_machine_definition
 
-    def publish_notification(self):
-        """
-        Function to run the tasks to publish the outcome of the step function
-        """
-        return tasks.SnsPublish(self, "Databrew Job Notification",
-            topic=self.sns_topic,
-            integration_pattern=sfn.IntegrationPattern.REQUEST_RESPONSE,
-            message=sfn.TaskInput.from_text("Databrew Job is Done and Orchestration Completed."),
-            subject=sfn.JsonPath.format("Data Connectors for AWS Clean Rooms Notifications: Pipeline result [{}]", sfn.JsonPath.string_at("$.status"))
-        )
-
     def invoke_lambda_run_brew_jobs(self):
         """
         Function to invoke the brew job lambda and run it subsequently
         """
 
         return tasks.LambdaInvoke(
-            self, 'Launch Databrew Job',
-            lambda_function=self.brew_lambda,
+            self, 'Launch DataBrew Job',
+            lambda_function=self.async_callback_construct.brew_run_job_lambda,
             integration_pattern=sfn.IntegrationPattern.WAIT_FOR_TASK_TOKEN,
             payload=sfn.TaskInput.from_object(
                 {
@@ -126,7 +131,64 @@ class WorkflowOrchestrator(Construct):
                     "brew_job_name": self.recipe_job_name
                 }
             )
+        ).add_catch(
+            errors=["States.TaskFailed"],
+            handler=self.databrew_job_failure_handler()
         )
+
+    def databrew_job_failure_handler(self):
+        tasks_chain = self.publish_brew_job_fail_notification()
+        return tasks_chain
+
+    def publish_brew_job_done_notification(self):
+        """
+        Function to run the tasks to publish the outcome of the step function
+        """
+        message_attributes = self.create_message_attributes('DataBrew', 'DataBrew job is Launched',
+                                                            sfn.JsonPath.string_at("$.status"))
+        return tasks.SnsPublish(
+            self, "DataBrew Job Launch Success Notification",
+            topic=self.sns_topic,
+            integration_pattern=sfn.IntegrationPattern.REQUEST_RESPONSE,
+            message=sfn.TaskInput.from_text("DataBrew Job is launched and orchestration completed."),
+            message_attributes=message_attributes,
+            subject=sfn.JsonPath.format(
+                "Data Connectors for AWS Clean Rooms Notifications: Pipeline result [{}]",
+                sfn.JsonPath.string_at("$.status"))
+        )
+
+    def publish_brew_job_fail_notification(self):
+        brew_job_fail_message = sfn.JsonPath.format(
+            "DataBrew Job fails to launch, error: {}, cause: {}",
+            sfn.JsonPath.string_at("$.Error"),
+            sfn.JsonPath.string_at("$.Cause")
+        )
+        message_attributes = self.create_message_attributes('DataBrew', sfn.JsonPath.string_at("$.Cause"), "Fail")
+        return tasks.SnsPublish(
+            self,
+            "DataBrew Job Launch Fail Notification",
+            topic=self.sns_topic,
+            integration_pattern=sfn.IntegrationPattern.REQUEST_RESPONSE,
+            message=sfn.TaskInput.from_text(brew_job_fail_message),
+            message_attributes=message_attributes,
+            subject="Data Connectors for AWS Clean Rooms Notifications: Pipeline result [Fail]"
+        )
+
+    def create_message_attributes(self, source, cause, pipeline_result):
+        return {
+            'Source': tasks.MessageAttribute(
+                data_type=tasks.MessageAttributeDataType.STRING,
+                value=source
+            ),
+            'Cause': tasks.MessageAttribute(
+                data_type=tasks.MessageAttributeDataType.STRING,
+                value=cause
+            ),
+            'PipelineResult': tasks.MessageAttribute(
+                data_type=tasks.MessageAttributeDataType.STRING,
+                value=pipeline_result
+            )
+        }
 
     def cdk_nag_suppression(self):
         nag_suppresion_reason = "The IAM entity contains wildcard permissions"
@@ -162,6 +224,16 @@ class WorkflowOrchestrator(Construct):
                     "id": 'AwsSolutions-IAM5',
                     "reason": nag_suppresion_reason,
                     "appliesTo": ["Resource::<SalesforceWorkflowOrchestrationBrewRunJobC2FF95FB.Arn>:*"]
+                },
+                {
+                    "id": 'AwsSolutions-IAM5',
+                    "reason": nag_suppresion_reason,
+                    "appliesTo": ["Resource::<SalesforceWorkflowWorkflowOrchestrationBrewRunJob55408E3A.Arn>:*"]
+                },
+                {
+                    "id": 'AwsSolutions-IAM5',
+                    "reason": nag_suppresion_reason,
+                    "appliesTo": ["Resource::<WorkflowOrchestratorWorkflowOrchestrationBrewRunJob4557B9A3.Arn>:*"]
                 },
             ],
         )
