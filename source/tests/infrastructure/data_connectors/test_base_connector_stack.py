@@ -48,7 +48,7 @@ def test_sns_notification_parameter(synth_template):
          "Default": "",
          "AllowedPattern": "(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\\.[a-zA-Z0-9-.]+$|^$)",
          "ConstraintDescription": "Must be a valid email address or blank",
-         "Description": "Email to notify with Orchestration results",
+         "Description": "Email to notify with results E.g. alice@example.com",
          "MaxLength": 50
          })
 
