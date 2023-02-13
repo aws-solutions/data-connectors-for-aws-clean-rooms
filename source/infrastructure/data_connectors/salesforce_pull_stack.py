@@ -538,9 +538,9 @@ class SalesforceMarketingCloudStack(AppFlowPullStack):
                     "id": "AwsSolutions-IAM5",
                     "reason": nag_suppression_reason_for_wildcard_permissions,
                     "appliesTo": [
-                        "Resource::arn:aws:states:*:<AWS::AccountId>:activity:<SalesforceWorkflowS3TriggerDatabrewRunnerE97446C3.Name>:*",
-                        "Resource::arn:aws:states:*:<AWS::AccountId>:stateMachine:<SalesforceWorkflowS3TriggerDatabrewRunnerE97446C3.Name>",
-                        "Resource::arn:aws:states:*:<AWS::AccountId>:execution:<SalesforceWorkflowS3TriggerDatabrewRunnerE97446C3.Name>:*"
+                        "Resource::arn:aws:states:*:<AWS::AccountId>:activity:<SalesforceWorkflowS3TriggerDataBrewRunner632E7DE9.Name>:*",
+                        "Resource::arn:aws:states:*:<AWS::AccountId>:stateMachine:<SalesforceWorkflowS3TriggerDataBrewRunner632E7DE9.Name>",
+                        "Resource::arn:aws:states:*:<AWS::AccountId>:execution:<SalesforceWorkflowS3TriggerDataBrewRunner632E7DE9.Name>:*"
                     ]
                 }
             ],
