@@ -138,7 +138,8 @@ class AutomaticDatabrewJobLaunch:
             actions=[
                 "states:StartSyncExecution",
                 "states:StartExecution",
-                "states:StopExecution"
+                "states:StopExecution",
+                "states:ListExecutions",
             ],
             resources=[
                 f"arn:aws:states:*:{stack_account}:activity:{state_machine_name}:*",
@@ -168,9 +169,9 @@ class AutomaticDatabrewJobLaunch:
                     "id": 'AwsSolutions-IAM5',
                     "reason": '* Resource applied to specific resource',
                     "appliesTo": [
-                        "Resource::arn:aws:states:*:<AWS::AccountId>:activity:<WorkflowOrchestratorS3TriggerDatabrewRunner092EE18B.Name>:*",
-                        "Resource::arn:aws:states:*:<AWS::AccountId>:stateMachine:<WorkflowOrchestratorS3TriggerDatabrewRunner092EE18B.Name>",
-                        "Resource::arn:aws:states:*:<AWS::AccountId>:execution:<WorkflowOrchestratorS3TriggerDatabrewRunner092EE18B.Name>:*"
+                        "Resource::arn:aws:states:*:<AWS::AccountId>:activity:<WorkflowOrchestratorS3TriggerDataBrewRunner98B33198.Name>:*",
+                        "Resource::arn:aws:states:*:<AWS::AccountId>:stateMachine:<WorkflowOrchestratorS3TriggerDataBrewRunner98B33198.Name>",
+                        "Resource::arn:aws:states:*:<AWS::AccountId>:execution:<WorkflowOrchestratorS3TriggerDataBrewRunner98B33198.Name>:*"
                     ]
                 },
             ],
