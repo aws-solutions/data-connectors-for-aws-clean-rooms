@@ -65,6 +65,36 @@ def event_handler(event, _):
         return {"automatic_brew_job_launch_execution": response["executionArn"]}
 
 
+def verify_env_setup():
+    if not (os.environ.get(DDB_TABLE_NAME) and os.environ.get(STATE_MACHINE_ARN)):
+        err_msg = f"The lambda requires {DDB_TABLE_NAME} and {STATE_MACHINE_ARN} environment variables to be configured." \
+                  f" One or more of these environment variables have not been configured"
+        logger.error(err_msg)
+        raise ValueError(err_msg)
+
+
+def get_watching_key(event):
+    unique_watching_keys = set()
+    latest_file_uploaded_timestamp = ""
+    for record in event['Records']:
+        payload = json.loads(record["body"])
+        for s3_info in payload.get("Records", {}):
+            bucket_name, file_name, event_time = extract_s3_record_info(s3_info)
+            logger.info(f'Processing new file {file_name} upload to {bucket_name} at {event_time}')
+            unique_watching_keys.add(bucket_name)
+            latest_file_uploaded_timestamp = max(latest_file_uploaded_timestamp, event_time)
+
+    watching_key = ';'.join(sorted(unique_watching_keys))
+    return watching_key, latest_file_uploaded_timestamp
+
+
+def extract_s3_record_info(record):
+    bucket_name = record['s3']['bucket']['arn']
+    file_name = record['s3']['object']['key']
+    event_time = record['eventTime']
+    return bucket_name, file_name, event_time
+
+
 def get_executions(stepfunctions_client, status_filter="RUNNING"):
     state_machine_arn = os.environ[STATE_MACHINE_ARN]
     running_executions = stepfunctions_client.list_executions(stateMachineArn=state_machine_arn,
@@ -72,12 +102,16 @@ def get_executions(stepfunctions_client, status_filter="RUNNING"):
     return running_executions['executions']
 
 
-def verify_env_setup():
-    if not (os.environ.get(DDB_TABLE_NAME) and os.environ.get(STATE_MACHINE_ARN)):
-        err_msg = f"The lambda requires {DDB_TABLE_NAME} and {STATE_MACHINE_ARN} environment variables to be configured." \
-                  f" One or more of these environment variables have not been configured"
-        logger.error(err_msg)
-        raise ValueError(err_msg)
+def get_timestamp(dynamodb_table, watching_key):
+    response = dynamodb_table.get_item(
+        Key={'watching_key': watching_key},
+    )
+    return response.get('Item', "")
+
+
+def has_newer_timestamp(ts, current_timestamp_in_dynamodb):
+    logger.info(f"Compare current event timestamp {ts} and timestamp in dynamodb {current_timestamp_in_dynamodb}")
+    return ts > current_timestamp_in_dynamodb
 
 
 def put_timestamp(dynamodb_table, watching_key, timestamp_str):
@@ -92,13 +126,6 @@ def put_timestamp(dynamodb_table, watching_key, timestamp_str):
     except ClientError as error:
         logger.error(error)
         raise error
-
-
-def extract_s3_record_info(record):
-    bucket_name = record['s3']['bucket']['arn']
-    file_name = record['s3']['object']['key']
-    event_time = record['eventTime']
-    return bucket_name, file_name, event_time
 
 
 def invoke_state_machine(stepfunctions_client, watching_key):
@@ -117,30 +144,3 @@ def invoke_state_machine(stepfunctions_client, watching_key):
         stateMachineArn=state_machine_arn,
         input=state_machine_input_str
     )
-
-
-def get_timestamp(dynamodb_table, watching_key):
-    response = dynamodb_table.get_item(
-        Key={'watching_key': watching_key},
-    )
-    return response.get('Item', "")
-
-
-def has_newer_timestamp(ts, current_timestamp_in_dynamodb):
-    logger.info(f"Compare current event timestamp {ts} and timestamp in dynamodb {current_timestamp_in_dynamodb}")
-    return ts > current_timestamp_in_dynamodb
-
-
-def get_watching_key(event):
-    unique_watching_keys = set()
-    latest_file_uploaded_timestamp = ""
-    for record in event['Records']:
-        payload = json.loads(record["body"])
-        for s3_info in payload.get("Records", {}):
-            bucket_name, file_name, event_time = extract_s3_record_info(s3_info)
-            logger.info(f'Processing new file {file_name} upload to {bucket_name} at {event_time}')
-            unique_watching_keys.add(bucket_name)
-            latest_file_uploaded_timestamp = max(latest_file_uploaded_timestamp, event_time)
-
-    watching_key = ';'.join(sorted(unique_watching_keys))
-    return watching_key, latest_file_uploaded_timestamp

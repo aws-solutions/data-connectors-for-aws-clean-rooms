@@ -39,11 +39,7 @@ def _mock_stepfunctions_client():
                                                 'startDate': datetime(2022, 1, 1)})
     client.list_executions = Mock(
         return_value={
-            'executions': [
-                # {
-                #     'executionArn': 'state_machine_execution_arn',
-                # },
-            ],
+            'executions': [],
             "nextToken": "any"
         }
     )

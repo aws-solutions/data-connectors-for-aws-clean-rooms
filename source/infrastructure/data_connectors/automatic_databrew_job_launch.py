@@ -42,33 +42,13 @@ class AutomaticDatabrewJobLaunch:
             stack.workflow.state_machine.state_machine_name
         )
 
-        self.create_s3_notifications_queue(stack)
-
-        stack.connector_buckets.inbound_bucket.add_event_notification(
-            s3.EventType.OBJECT_CREATED,
-            s3n.SqsDestination(self.s3_notifications_queue),
-            s3.NotificationKeyFilter(
-                prefix=stack.connector_buckets.inbound_bucket_prefix
-            )
-        )
-
         self.create_s3_notification_lambda_function(stack, self.automatic_brew_job_launch,
                                                     self.file_upload_complete_waiting_time_in_minutes)
 
-        self.lambda_process_s3_notification.add_event_source(
-            SqsEventSource(
-                self.s3_notifications_queue,
-                batch_size=SQSQueueParameters.batch_size,
-                max_batching_window=Duration.seconds(SQSQueueParameters.max_batching_window_in_seconds)
-            )
-        )
+        self.create_s3_notifications_queue(stack)
 
-    def create_s3_notifications_queue(self, stack):
-        self.s3_notifications_queue = sqs.Queue(
-            stack, "SqsBatching",
-            visibility_timeout=Duration.seconds(SQSQueueParameters.visibility_timeout_in_seconds),
-            queue_name=f"{Aws.STACK_NAME}-s3-notifications",
-        )
+        self.add_s3_notifications_to_sqs(stack)
+        self.add_lambda_event_source_sqs()
 
     def create_template_parameters(self, stack):
         allowed_values = ["OFF", "ON"]
@@ -154,6 +134,33 @@ class AutomaticDatabrewJobLaunch:
                         "Resource::arn:<AWS::Partition>:logs:<AWS::Region>:<AWS::AccountId>:log-group:/aws/lambda/*"]
                 },
             ]
+        )
+
+    def create_s3_notifications_queue(self, stack):
+        self.s3_notifications_queue = sqs.Queue(
+            stack, "SqsBatching",
+            visibility_timeout=Duration.seconds(SQSQueueParameters.visibility_timeout_in_seconds),
+            queue_name=f"{Aws.STACK_NAME}-s3-notifications",
+        )
+        self.s3_notifications_queue.node.add_dependency(self.lambda_process_s3_notification)
+        self.s3_notifications_queue.node.add_dependency(stack.connector_buckets.inbound_bucket)
+
+    def add_s3_notifications_to_sqs(self, stack):
+        stack.connector_buckets.inbound_bucket.add_event_notification(
+            s3.EventType.OBJECT_CREATED,
+            s3n.SqsDestination(self.s3_notifications_queue),
+            s3.NotificationKeyFilter(
+                prefix=stack.connector_buckets.inbound_bucket_prefix
+            )
+        )
+
+    def add_lambda_event_source_sqs(self):
+        self.lambda_process_s3_notification.add_event_source(
+            SqsEventSource(
+                self.s3_notifications_queue,
+                batch_size=SQSQueueParameters.batch_size,
+                max_batching_window=Duration.seconds(SQSQueueParameters.max_batching_window_in_seconds)
+            )
         )
 
     def create_policy_statements_for_lambda(self, stack_account, dynamodb_table_name, state_machine_name):
