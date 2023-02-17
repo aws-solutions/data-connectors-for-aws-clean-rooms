@@ -69,5 +69,5 @@ def test_invoke_lambda_run_brew_jobs_creation(synth_template):
     payload = "\"Payload\":{\"task_token.$\":\"$$.Task.Token\",\"brew_job_name\":\"UnitTestRecipeJob\"}"
     assert payload in states_definition
 
-    on_catch = "\"Catch\":[{\"ErrorEquals\":[\"States.TaskFailed\"],\"Next\":\"Databrew Job Fail Notification\"}]"
+    on_catch = "\"Catch\":[{\"ErrorEquals\":[\"States.TaskFailed\"],\"Next\":\"DataBrew Job Launch Fail Notification\"}]"
     assert on_catch in states_definition

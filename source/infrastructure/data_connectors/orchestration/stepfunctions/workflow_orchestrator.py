@@ -114,18 +114,15 @@ class WorkflowOrchestrator(Construct):
 
         file_uploading_pass = sfn.Pass(self, "File Uploading").next(dynamodb_get_file_expected_finish_time)
 
-        trigger_data_transform_workflow = self.invoke_lambda_run_brew_jobs() \
-            .next(self.publish_brew_job_done_notification())
+        brew_job_launch = self.invoke_lambda_run_brew_jobs().next(self.publish_brew_job_done_notification())
 
-        choice = sfn.Choice(self, "Check File Upload Status")
-        choice.when(
+        choice = sfn.Choice(self, "Check File Upload Status").when(
             sfn.Condition.timestamp_less_than_equals_json_path(
                 "$.dynamodb_last_file_uploaded_time.Item.timestamp_str.S",
                 "$.dynamodb_file_upload_expected_finish_time.Item.timestamp_str.S"
             ),
-            trigger_data_transform_workflow
-        )
-        choice.otherwise(file_uploading_pass)
+            brew_job_launch
+        ).otherwise(file_uploading_pass)
 
         state_machine_definition = dynamodb_get_file_expected_finish_time.next(wait).next(
             dynamodb_get_last_file_uploaded_time).next(choice)
@@ -214,42 +211,16 @@ class WorkflowOrchestrator(Construct):
                 {
                     "id": 'AwsSolutions-IAM5',
                     "reason": nag_suppresion_reason,
-                    "appliesTo": ['Resource::*']
-                },
-                {
-                    "id": 'AwsSolutions-IAM5',
-                    "reason": nag_suppresion_reason,
-                    "appliesTo": ['Resource::<WorkflowOrchestrationAsyncCallbackConstructBrewRunJob52812FF2.Arn>:*']
-                },
-                {
-                    "id": 'AwsSolutions-IAM5',
-                    "reason": nag_suppresion_reason,
-                    "appliesTo": ["Resource::<HeadlessTransform07473135.Arn>:*"]
-                },
-                {
-                    "id": 'AwsSolutions-IAM5',
-                    "reason": nag_suppresion_reason,
-                    "appliesTo": ["Resource::<WorkflowOrchestrationBrewRunJob463FED05.Arn>:*"]
-                },
-                {
-                    "id": 'AwsSolutions-IAM5',
-                    "reason": nag_suppresion_reason,
-                    "appliesTo": ["Resource::<ConnectorUpdateFunction80A21979.Arn>:*"]
-                },
-                {
-                    "id": 'AwsSolutions-IAM5',
-                    "reason": nag_suppresion_reason,
-                    "appliesTo": ["Resource::<SalesforceWorkflowOrchestrationBrewRunJobC2FF95FB.Arn>:*"]
-                },
-                {
-                    "id": 'AwsSolutions-IAM5',
-                    "reason": nag_suppresion_reason,
-                    "appliesTo": ["Resource::<SalesforceWorkflowWorkflowOrchestrationBrewRunJob55408E3A.Arn>:*"]
-                },
-                {
-                    "id": 'AwsSolutions-IAM5',
-                    "reason": nag_suppresion_reason,
-                    "appliesTo": ["Resource::<WorkflowOrchestratorWorkflowOrchestrationBrewRunJob4557B9A3.Arn>:*"]
+                    "appliesTo": [
+                        'Resource::*',
+                        'Resource::<WorkflowOrchestrationAsyncCallbackConstructBrewRunJob52812FF2.Arn>:*',
+                        "Resource::<HeadlessTransform07473135.Arn>:*",
+                        "Resource::<WorkflowOrchestrationBrewRunJob463FED05.Arn>:*",
+                        "Resource::<ConnectorUpdateFunction80A21979.Arn>:*",
+                        "Resource::<SalesforceWorkflowOrchestrationBrewRunJobC2FF95FB.Arn>:*",
+                        "Resource::<SalesforceWorkflowWorkflowOrchestrationBrewRunJob55408E3A.Arn>:*",
+                        "Resource::<WorkflowOrchestratorWorkflowOrchestrationBrewRunJob4557B9A3.Arn>:*"
+                    ]
                 },
             ],
         )

@@ -11,16 +11,19 @@
 #  the specific language governing permissions and limitations under the License.                                      #
 # ######################################################################################################################
 
+from dataclasses import dataclass
 from aws_cdk import (
     Duration,
     CfnParameter,
     aws_s3 as s3,
     aws_s3_notifications as s3n,
     aws_lambda as lambda_,
+    aws_sqs as sqs,
     aws_iam as iam,
     Aws,
 )
 from cdk_nag import NagSuppressions
+from aws_cdk.aws_lambda_event_sources import SqsEventSource
 from aws_solutions.cdk.aws_lambda.python.function import SolutionsPythonFunction
 from aws_solutions.cdk.aws_lambda.layers.aws_lambda_powertools import PowertoolsLayer
 from data_connectors.aws_lambda.layers.aws_solutions.layer import SolutionsLayer
@@ -39,14 +42,32 @@ class AutomaticDatabrewJobLaunch:
             stack.workflow.state_machine.state_machine_name
         )
 
-        self.create_s3_notification_lambda_function(stack, self.automatic_brew_job_launch)
+        self.create_s3_notifications_queue(stack)
 
         stack.connector_buckets.inbound_bucket.add_event_notification(
             s3.EventType.OBJECT_CREATED,
-            s3n.LambdaDestination(self.lambda_process_s3_notification),
+            s3n.SqsDestination(self.s3_notifications_queue),
             s3.NotificationKeyFilter(
                 prefix=stack.connector_buckets.inbound_bucket_prefix
             )
+        )
+
+        self.create_s3_notification_lambda_function(stack, self.automatic_brew_job_launch,
+                                                    self.file_upload_complete_waiting_time_in_minutes)
+
+        self.lambda_process_s3_notification.add_event_source(
+            SqsEventSource(
+                self.s3_notifications_queue,
+                batch_size=SQSQueueParameters.batch_size,
+                max_batching_window=Duration.seconds(SQSQueueParameters.max_batching_window_in_seconds)
+            )
+        )
+
+    def create_s3_notifications_queue(self, stack):
+        self.s3_notifications_queue = sqs.Queue(
+            stack, "SqsBatching",
+            visibility_timeout=Duration.seconds(SQSQueueParameters.visibility_timeout_in_seconds),
+            queue_name=f"{Aws.STACK_NAME}-s3-notifications",
         )
 
     def create_template_parameters(self, stack):
@@ -65,6 +86,20 @@ class AutomaticDatabrewJobLaunch:
             group=group_name,
         )
 
+        self.file_upload_complete_waiting_time_in_minutes = CfnParameter(
+            stack,
+            "FileUploadCompleteWaitingTime",
+            description="Inbound bucket file upload complete waiting time in minutes",
+            default=1,
+            min_value=0.5,
+            type='Number'
+        )
+        stack.solutions_template_options.add_parameter(
+            self.file_upload_complete_waiting_time_in_minutes,
+            label="File upload complete waiting time in minutes",
+            group=group_name
+        )
+
     def create_lambda_iam_policy(self, stack, stack_account, dynamodb_table_name, state_machine_name):
         policy_statements: list[iam.PolicyStatement] = self.create_policy_statements_for_lambda(
             stack_account,
@@ -77,7 +112,8 @@ class AutomaticDatabrewJobLaunch:
 
         self.lambda_iam_policy_cdk_nag_suppresions(self.lambda_iam_policy)
 
-    def create_s3_notification_lambda_function(self, stack, automatic_brew_job_launch):
+    def create_s3_notification_lambda_function(self, stack, automatic_brew_job_launch,
+                                               file_upload_complete_waiting_time_in_minutes):
         self.lambda_process_s3_notification = SolutionsPythonFunction(
             stack,
             "ProcessS3ObjectCreateNotificationFunction",
@@ -99,6 +135,9 @@ class AutomaticDatabrewJobLaunch:
                                                             stack.workflow.state_machine.state_machine_arn)
         self.lambda_process_s3_notification.add_environment("AUTOMATIC_DATABREW_JOB_LAUNCH",
                                                             automatic_brew_job_launch.value_as_string)
+        self.lambda_process_s3_notification.add_environment("WAITING_TIME_IN_MINUTES",
+                                                            file_upload_complete_waiting_time_in_minutes.value_as_string
+                                                            )
 
         self.lambda_iam_policy.attach_to_role(self.lambda_process_s3_notification.role)
 
@@ -121,10 +160,10 @@ class AutomaticDatabrewJobLaunch:
         dynamodb_table_statement = iam.PolicyStatement(
             effect=iam.Effect.ALLOW,
             actions=[
-                 "dynamodb:PutItem",
-                 "dynamodb:Query",
-                 "dynamodb:UpdateItem",
-                 "dynamodb:GetItem",
+                "dynamodb:PutItem",
+                "dynamodb:Query",
+                "dynamodb:UpdateItem",
+                "dynamodb:GetItem",
             ],
             resources=[
                 f"arn:aws:dynamodb:*:{stack_account}:table/{dynamodb_table_name}/stream/*",
@@ -159,20 +198,20 @@ class AutomaticDatabrewJobLaunch:
                     "id": 'AwsSolutions-IAM5',
                     "reason": '* Resource applied to specific resource',
                     "appliesTo": [
-                        "Action::dynamodb:*",
                         "Resource::arn:aws:dynamodb:*:<AWS::AccountId>:table/<DynamoDBTable59784FC0>/stream/*",
                         "Resource::arn:aws:dynamodb:*:<AWS::AccountId>:table/<DynamoDBTable59784FC0>",
                         "Resource::arn:aws:dynamodb:*:<AWS::AccountId>:table/<DynamoDBTable59784FC0>/index/*",
-                    ]
-                },
-                {
-                    "id": 'AwsSolutions-IAM5',
-                    "reason": '* Resource applied to specific resource',
-                    "appliesTo": [
                         "Resource::arn:aws:states:*:<AWS::AccountId>:activity:<WorkflowOrchestratorS3TriggerDataBrewRunner98B33198.Name>:*",
                         "Resource::arn:aws:states:*:<AWS::AccountId>:stateMachine:<WorkflowOrchestratorS3TriggerDataBrewRunner98B33198.Name>",
-                        "Resource::arn:aws:states:*:<AWS::AccountId>:execution:<WorkflowOrchestratorS3TriggerDataBrewRunner98B33198.Name>:*"
+                        "Resource::arn:aws:states:*:<AWS::AccountId>:execution:<WorkflowOrchestratorS3TriggerDataBrewRunner98B33198.Name>:*",
                     ]
                 },
             ],
         )
+
+
+@dataclass
+class SQSQueueParameters:
+    visibility_timeout_in_seconds: int = 300
+    batch_size: int = 30
+    max_batching_window_in_seconds: int = 10

@@ -522,12 +522,30 @@ class SalesforceMarketingCloudStack(AppFlowPullStack):
             "/SalesforceMarketingCloudStack/AppFlowConnectionSecret/Resource",
             [
                 {
-                    "id":
-                        "AwsSolutions-SMG4",
-                    "reason":
-                        "This secret's content does not support an auto-rotation process",
+                    "id": "AwsSolutions-SMG4",
+                    "reason": "This secret's content does not support an auto-rotation process",
                 },
             ],
+        )
+
+        # Sqs
+        NagSuppressions.add_resource_suppressions_by_path(
+            self,
+            "/SalesforceMarketingCloudStack/SqsBatching/Resource",
+            [
+                {
+                    "id": "AwsSolutions-SQS2",
+                    "reason": "The SQS Queue does not have server-side encryption enabled."
+                },
+                {
+                    "id": "AwsSolutions-SQS3",
+                    "reason": "The SQS queue does not have a dead-letter queue (DLQ) enabled or have a cdk-nag rule suppression indicating it is a DLQ."
+                },
+                {
+                    "id": "AwsSolutions-SQS4",
+                    "reason": "The SQS queue does not require requests to use SSL."
+                },
+            ]
         )
 
         NagSuppressions.add_resource_suppressions_by_path(

@@ -88,12 +88,10 @@ class SalesforceWorkflow(WorkflowOrchestrator):
                 {
                     "id": 'AwsSolutions-IAM5',
                     "reason": '* Resources will be suppressed by cdk nag and it has to be not suppressed',
-                    "appliesTo": ['Resource::*']
-                },
-                {
-                    "id": 'AwsSolutions-IAM5',
-                    "reason": '* resource for a specific lambda that needs to suppressed',
-                    "appliesTo": ['Resource::<ConnectorUpdateFunction80A21979.Arn>:*']
+                    "appliesTo": [
+                        'Resource::*',
+                        'Resource::<ConnectorUpdateFunction80A21979.Arn>:*'
+                    ]
                 },
             ],
         )
