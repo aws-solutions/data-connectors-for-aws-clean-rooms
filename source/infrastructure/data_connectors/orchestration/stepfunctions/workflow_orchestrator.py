@@ -213,11 +213,6 @@ class WorkflowOrchestrator(Construct):
                     "reason": nag_suppresion_reason,
                     "appliesTo": [
                         'Resource::*',
-                        'Resource::<WorkflowOrchestrationAsyncCallbackConstructBrewRunJob52812FF2.Arn>:*',
-                        "Resource::<HeadlessTransform07473135.Arn>:*",
-                        "Resource::<WorkflowOrchestrationBrewRunJob463FED05.Arn>:*",
-                        "Resource::<ConnectorUpdateFunction80A21979.Arn>:*",
-                        "Resource::<SalesforceWorkflowOrchestrationBrewRunJobC2FF95FB.Arn>:*",
                         "Resource::<SalesforceWorkflowWorkflowOrchestrationBrewRunJob55408E3A.Arn>:*",
                         "Resource::<WorkflowOrchestratorWorkflowOrchestrationBrewRunJob4557B9A3.Arn>:*"
                     ]

@@ -30,9 +30,15 @@ from data_connectors.aws_lambda.layers.aws_solutions.layer import SolutionsLayer
 from data_connectors.aws_lambda import LAMBDA_PATH
 
 
+@dataclass
+class SQSQueueParameters:
+    visibility_timeout_in_seconds: int = 300
+    batch_size: int = 30
+    max_batching_window_in_seconds: int = 10
+
+
 class AutomaticDatabrewJobLaunch:
     def __init__(self, stack, schema_provider_parameter=None) -> None:
-
         self.create_template_parameters(stack)
 
         self.create_s3_notifications_queue(stack)
@@ -210,10 +216,3 @@ class AutomaticDatabrewJobLaunch:
                 },
             ],
         )
-
-
-@dataclass
-class SQSQueueParameters:
-    visibility_timeout_in_seconds: int = 300
-    batch_size: int = 30
-    max_batching_window_in_seconds: int = 10
