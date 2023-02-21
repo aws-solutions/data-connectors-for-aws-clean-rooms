@@ -28,7 +28,7 @@ from data_connectors.orchestration.async_callback_construct import AsyncCallback
 
 
 class WorkflowOrchestrator(Construct):
-    """The State Machine automatically launches the Databrew job to process the data stored in the s3 bucket"""
+    """The State Machine automatically launches the DataBrew job to process the data stored in the s3 bucket"""
 
     def __init__(
             self,
@@ -56,7 +56,7 @@ class WorkflowOrchestrator(Construct):
         self.dynamodb_table = dynamodb_table
         self.recipe_lambda_custom_resource = recipe_lambda_custom_resource
 
-        self.base_state_machine_name = f"{Aws.STACK_NAME}-S3TriggerDatabrewJob-Runner"
+        self.base_state_machine_name = f"{Aws.STACK_NAME}-S3TriggerDataBrewJob-Runner"
 
         super().__init__(scope, id)
 
@@ -77,7 +77,7 @@ class WorkflowOrchestrator(Construct):
 
         return sfn.StateMachine(
             self,
-            "S3TriggerDatabrewRunner",
+            "S3TriggerDataBrewRunner",
             tracing_enabled=True,
             state_machine_name=self.base_state_machine_name,
             definition=self.chain,
@@ -94,25 +94,38 @@ class WorkflowOrchestrator(Construct):
         """
         wait = sfn.Wait(self, "Wait", time=sfn.WaitTime.seconds_path("$.waiting_time_in_seconds"))
 
-        dynamodb_get_item = tasks.DynamoGetItem(self, "DynamoDB Get Last File Uploaded Time",
-                                                key={"watching_key": tasks.DynamoAttributeValue.from_string(
-                                                    sfn.JsonPath.string_at("$.watching_key"))},
-                                                table=self.dynamodb_table,
-                                                result_path="$.dynamodb_response",
-                                                consistent_read=True)
+        dynamodb_get_file_expected_finish_time = tasks.DynamoGetItem(
+            self,
+            "DynamoDB Get File Expected Uploading Finish Time",
+            key={"watching_key": tasks.DynamoAttributeValue.from_string(
+                sfn.JsonPath.string_at("$.watching_key"))},
+            table=self.dynamodb_table,
+            result_path="$.dynamodb_file_upload_expected_finish_time",
+            consistent_read=True)
 
-        file_uploading_pass = sfn.Pass(self, "File Uploading")
+        dynamodb_get_last_file_uploaded_time = tasks.DynamoGetItem(
+            self,
+            "DynamoDB Get Last File Uploaded Time",
+            key={"watching_key": tasks.DynamoAttributeValue.from_string(
+                sfn.JsonPath.string_at("$.watching_key"))},
+            table=self.dynamodb_table,
+            result_path="$.dynamodb_last_file_uploaded_time",
+            consistent_read=True)
 
-        trigger_data_transform_workflow = self.invoke_lambda_run_brew_jobs() \
-            .next(self.publish_brew_job_done_notification())
+        file_uploading_pass = sfn.Pass(self, "File Uploading").next(dynamodb_get_file_expected_finish_time)
 
-        choice = sfn.Choice(self, "Check File Upload Status")
-        choice.when(sfn.Condition.timestamp_less_than_equals_json_path("$.dynamodb_response.Item.timestamp_str.S",
-                                                                       "$.expected_upload_finish_time_str"),
-                    trigger_data_transform_workflow)
-        choice.otherwise(file_uploading_pass)
+        brew_job_launch = self.invoke_lambda_run_brew_jobs().next(self.publish_brew_job_done_notification())
 
-        state_machine_definition = wait.next(dynamodb_get_item).next(choice)
+        choice = sfn.Choice(self, "Check File Upload Status").when(
+            sfn.Condition.timestamp_less_than_equals_json_path(
+                "$.dynamodb_last_file_uploaded_time.Item.timestamp_str.S",
+                "$.dynamodb_file_upload_expected_finish_time.Item.timestamp_str.S"
+            ),
+            brew_job_launch
+        ).otherwise(file_uploading_pass)
+
+        state_machine_definition = dynamodb_get_file_expected_finish_time.next(wait).next(
+            dynamodb_get_last_file_uploaded_time).next(choice)
 
         return state_machine_definition
 
@@ -198,42 +211,11 @@ class WorkflowOrchestrator(Construct):
                 {
                     "id": 'AwsSolutions-IAM5',
                     "reason": nag_suppresion_reason,
-                    "appliesTo": ['Resource::*']
-                },
-                {
-                    "id": 'AwsSolutions-IAM5',
-                    "reason": nag_suppresion_reason,
-                    "appliesTo": ['Resource::<WorkflowOrchestrationAsyncCallbackConstructBrewRunJob52812FF2.Arn>:*']
-                },
-                {
-                    "id": 'AwsSolutions-IAM5',
-                    "reason": nag_suppresion_reason,
-                    "appliesTo": ["Resource::<HeadlessTransform07473135.Arn>:*"]
-                },
-                {
-                    "id": 'AwsSolutions-IAM5',
-                    "reason": nag_suppresion_reason,
-                    "appliesTo": ["Resource::<WorkflowOrchestrationBrewRunJob463FED05.Arn>:*"]
-                },
-                {
-                    "id": 'AwsSolutions-IAM5',
-                    "reason": nag_suppresion_reason,
-                    "appliesTo": ["Resource::<ConnectorUpdateFunction80A21979.Arn>:*"]
-                },
-                {
-                    "id": 'AwsSolutions-IAM5',
-                    "reason": nag_suppresion_reason,
-                    "appliesTo": ["Resource::<SalesforceWorkflowOrchestrationBrewRunJobC2FF95FB.Arn>:*"]
-                },
-                {
-                    "id": 'AwsSolutions-IAM5',
-                    "reason": nag_suppresion_reason,
-                    "appliesTo": ["Resource::<SalesforceWorkflowWorkflowOrchestrationBrewRunJob55408E3A.Arn>:*"]
-                },
-                {
-                    "id": 'AwsSolutions-IAM5',
-                    "reason": nag_suppresion_reason,
-                    "appliesTo": ["Resource::<WorkflowOrchestratorWorkflowOrchestrationBrewRunJob4557B9A3.Arn>:*"]
+                    "appliesTo": [
+                        'Resource::*',
+                        "Resource::<SalesforceWorkflowWorkflowOrchestrationBrewRunJob55408E3A.Arn>:*",
+                        "Resource::<WorkflowOrchestratorWorkflowOrchestrationBrewRunJob4557B9A3.Arn>:*"
+                    ]
                 },
             ],
         )

@@ -777,87 +777,25 @@ def databrew_role_apply_nag_suppressions(databrew_iam_role) -> None:
             {
                 "id": 'AwsSolutions-IAM5',
                 "reason": nag_suppression_reason,
-                "appliesTo": ["Action::s3:List*"]
-            },
-            {
-                "id": 'AwsSolutions-IAM5',
-                "reason": nag_suppression_reason,
-                "appliesTo": ["Action::s3:Get*"]
-            },
-            {
-                "id": 'AwsSolutions-IAM5',
-                "reason": nag_suppression_reason,
-                "appliesTo": ["Action::s3:Put*"]
-            },
-            {
-                "id": 'AwsSolutions-IAM5',
-                "reason": nag_suppression_reason,
-                "appliesTo": ["Action::s3:Delete*"]
-            },
-            {
-                "id": 'AwsSolutions-IAM5',
-                "reason": nag_suppression_reason,
-                "appliesTo": ['Resource::<inboundbucketFA352838.Arn>/*']
-            },
-            {
-                "id": 'AwsSolutions-IAM5',
-                "reason": nag_suppression_reason,
-                "appliesTo": ["Resource::*"]
-            },
-            {
-                "id": 'AwsSolutions-IAM5',
-                "reason": nag_suppression_reason,
-                "appliesTo": ["Resource::<transformbucket674563F2.Arn>/*"]
-            },
-            {
-                "id": 'AwsSolutions-IAM5',
-                "reason": nag_suppression_reason,
-                "appliesTo": ["Action::glue:Get*"]
-            },
-            {
-                "id": 'AwsSolutions-IAM5',
-                "reason": nag_suppression_reason,
-                "appliesTo": ["Action::glue:Put*"]
-            },
-            {
-                "id": 'AwsSolutions-IAM5',
-                "reason": nag_suppression_reason,
-                "appliesTo": ["Action::glue:List*"]
-            },
-            {
-                "id": 'AwsSolutions-IAM5',
-                "reason": nag_suppression_reason,
-                "appliesTo": ["Action::glue:Update*"]
-            },
-            {
-                "id": 'AwsSolutions-IAM5',
-                "reason": nag_suppression_reason,
-                "appliesTo": ["Resource::arn:aws:logs:<AWS::Region>:<AWS::AccountId>:log-group:/aws-glue-databrew/*"]
-            },
-            {
-                "id": 'AwsSolutions-IAM5',
-                "reason": nag_suppression_reason,
-                "appliesTo": ["Action::kms:GenerateDataKey*"]
-            },
-            {
-                "id": 'AwsSolutions-IAM5',
-                "reason": nag_suppression_reason,
-                "appliesTo": [f"Resource::arn:aws:secretsmanager:<AWS::Region>:<AWS::AccountId>:secret:{DATABREW_CUSTOM_SECRETS_PREFIX}*"]
-            },
-            {
-                "id": 'AwsSolutions-IAM5',
-                "reason": nag_suppression_reason,
-                "appliesTo": ["Resource::arn:aws:secretsmanager:<AWS::Region>:<AWS::AccountId>:secret:databrew!default-*"]
-            },
-            {
-                "id": 'AwsSolutions-IAM5',
-                "reason": nag_suppression_reason,
-                "appliesTo": ["Resource::arn:aws:kms:<AWS::Region>:<AWS::AccountId>:key/*"]
-            },
-            {
-                "id": 'AwsSolutions-IAM5',
-                "reason": nag_suppression_reason,
-                "appliesTo": ["Action::kms:ReEncrypt*"]
+                "appliesTo": [
+                    "Action::s3:List*",
+                    "Action::s3:Get*",
+                    "Action::s3:Put*",
+                    "Action::s3:Delete*",
+                    'Resource::<inboundbucketFA352838.Arn>/*',
+                    "Resource::*",
+                    "Resource::<transformbucket674563F2.Arn>/*",
+                    "Action::glue:Get*",
+                    "Action::glue:Put*",
+                    "Action::glue:List*",
+                    "Action::glue:Update*",
+                    "Resource::arn:aws:logs:<AWS::Region>:<AWS::AccountId>:log-group:/aws-glue-databrew/*",
+                    f"Resource::arn:aws:secretsmanager:<AWS::Region>:<AWS::AccountId>:secret:{DATABREW_CUSTOM_SECRETS_PREFIX}*",
+                    "Action::kms:GenerateDataKey*",
+                    "Resource::arn:aws:secretsmanager:<AWS::Region>:<AWS::AccountId>:secret:databrew!default-*",
+                    "Resource::arn:aws:kms:<AWS::Region>:<AWS::AccountId>:key/*",
+                    "Action::kms:ReEncrypt*",
+                ]
             },
         ]
     )
@@ -871,38 +809,16 @@ def recipe_policy_apply_nag_suppresions(recipe_lambda_iam_policy) -> None:
             {
                 "id": 'AwsSolutions-IAM5',
                 "reason": nag_suppression_reason,
-                "appliesTo": ["Action::s3:Put*"]
+                "appliesTo": [
+                    "Action::s3:Put*",
+                    "Action::s3:List*",
+                    "Action::s3:Get*",
+                    "Action::s3:Update*",
+                    'Resource::arn:aws:s3:::<inboundbucketFA352838>/{"Fn::If":["InboundBucketPrefixCondition","inbound/",{"Fn::Join":["",[{"Ref":"AWS::StackName"},"-flow/"]]}]}*',
+                    "Action::databrew:Delete*",
+                    "Resource::arn:aws:s3:::<inboundbucketFA352838>/<InboundBucketPrefix>*"
+                ]
             },
-            {
-                "id": 'AwsSolutions-IAM5',
-                "reason": nag_suppression_reason,
-                "appliesTo": ["Action::s3:List*"]
-            },
-            {
-                "id": 'AwsSolutions-IAM5',
-                "reason": nag_suppression_reason,
-                "appliesTo": ["Action::s3:Get*"]
-            },
-            {
-                "id": 'AwsSolutions-IAM5',
-                "reason": nag_suppression_reason,
-                "appliesTo": ['Resource::arn:aws:s3:::<inboundbucketFA352838>/{"Fn::If":["InboundBucketPrefixCondition","inbound/",{"Fn::Join":["",[{"Ref":"AWS::StackName"},"-flow/"]]}]}*']
-            },
-            {
-                "id": 'AwsSolutions-IAM5',
-                "reason": nag_suppression_reason,
-                "appliesTo": ["Action::s3:Update*"]
-            },
-            {
-                "id": 'AwsSolutions-IAM5',
-                "reason": nag_suppression_reason,
-                "appliesTo": ["Action::databrew:Delete*"]
-            },
-            {
-                "id": 'AwsSolutions-IAM5',
-                "reason": nag_suppression_reason,
-                "appliesTo": ["Resource::arn:aws:s3:::<inboundbucketFA352838>/<InboundBucketPrefix>*"]
-            }
         ],
     )
 

@@ -15,10 +15,10 @@ import os
 import boto3
 import pytest
 from moto import mock_dynamodb
-from unittest.mock import Mock
+from unittest.mock import Mock, call
 from boto3.dynamodb.conditions import Key
 
-from aws_lambda.brew_run_job.lambda_function import handler, logger as lambda_function_logger
+from brew_run_job.lambda_function import handler, logger as lambda_function_logger
 from aws_solutions.core.helpers import get_service_client, _helpers_service_clients, _helpers_service_resources
 import shared.stepfunctions as stepfunctions
 
@@ -86,11 +86,14 @@ def dynamodb_client():
     ],
 )
 def test_handler_success(lambda_event, mock_databrew_and_stepfunctions, dynamodb_client):
-    handler(lambda_event, None)
+    response = handler(lambda_event, None)
+    assert response == {'brew_job_run_id': 'ids'}
     table = dynamodb_client.Table(os.environ["DDB_TABLE_NAME"])
     token = table.query(KeyConditionExpression=Key("job_id").eq("ids"))["Items"][0]["task_token"]
-    stepfunctions.send_heart_beat.assert_called_with(lambda_event['task_token'])
     assert token == "faketoken"
+    _helpers_service_clients["databrew"].start_job_run.assert_called_once()
+    stepfunctions.send_heart_beat.assert_has_calls([call('faketoken'), call('faketoken')])
+
 
 
 @pytest.mark.parametrize(
@@ -102,6 +105,6 @@ def test_handler_success(lambda_event, mock_databrew_and_stepfunctions, dynamodb
     ],
 )
 def test_handler_failure(lambda_event, mock_databrew_and_stepfunctions, dynamodb_client):
-    with pytest.raises(LookupError, match=r'brew_job_name'):
+    with pytest.raises(KeyError, match=r'brew_job_name'):
         handler(lambda_event, None)
-    stepfunctions.send_task_failure.assert_called_with("", lambda_event['task_token'])
+    stepfunctions.send_task_failure.assert_called_once()
