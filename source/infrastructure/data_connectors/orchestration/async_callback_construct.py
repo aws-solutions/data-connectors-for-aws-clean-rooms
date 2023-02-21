@@ -29,13 +29,13 @@ from data_connectors.aws_lambda.layers.aws_solutions.layer import SolutionsLayer
 class AsyncCallbackConstruct(Construct):
 
     def __init__(
-        self,
-        scope: Construct,
-        id: str,
-        job_name: str,
-        workflow_name: str,
-        *args,
-        **kwargs,
+            self,
+            scope: Construct,
+            id: str,
+            job_name: str,
+            workflow_name: str,
+            *args,
+            **kwargs,
     ):
 
         super().__init__(scope, id)
@@ -88,7 +88,6 @@ class AsyncCallbackConstruct(Construct):
         self.dynamo_table = lambda_to_put_token_in_dynamo.dynamo_table
 
         for func_ in [self.callback_lambda_function, self.brew_run_job_lambda]:
-
             func_.add_environment(
                 "SOLUTION_ID", self.node.try_get_context("SOLUTION_ID")
             )
@@ -97,10 +96,10 @@ class AsyncCallbackConstruct(Construct):
             )
 
         LambdaToDynamoDB(self, "ReadTokenFromDB",
-            existing_table_obj = self.dynamo_table,
-            existing_lambda_obj=self.callback_lambda_function,
-            table_permissions="Read"
-        )
+                         existing_table_obj=self.dynamo_table,
+                         existing_lambda_obj=self.callback_lambda_function,
+                         table_permissions="Read"
+                         )
 
         EventbridgeToLambda(
             self,
@@ -177,26 +176,27 @@ class AsyncCallbackConstruct(Construct):
 
     def cdk_nag_suppressions(self):
 
-        list_of_cdk_nags_to_suppress = [{
-                    "id": 'AwsSolutions-IAM5',
-                    "reason": "A bigger Reason",
-                    "appliesTo": ['Resource::arn:<AWS::Partition>:logs:<AWS::Region>:<AWS::AccountId>:log-group:/aws/lambda/*'],
+        list_of_cdk_nags_to_suppress = [
+            {
+                "id": 'AwsSolutions-IAM5',
+                "reason": "The IAM entity contains wildcard permissions",
+                "appliesTo": [
+                    'Resource::*',
+                    'Resource::arn:<AWS::Partition>:logs:<AWS::Region>:<AWS::AccountId>:log-group:/aws/lambda/*',
 
-                }, {
-                    "id": 'AwsSolutions-IAM5',
-                    "reason": 'Lambda needs the following minimum required permissions to send trace data to X-Ray and access ENIs in a VPC.',
-                    "appliesTo": ['Resource::*']
-                }, {
-                    "id": 'AwsSolutions-IAM5',
-                    "reason": 'Databrew actions with * needs to suppressed',
-                    "appliesTo": ['Action::databrew:*']
-                }
-                ]
+                ],
+
+            },
+            {
+                "id": 'AwsSolutions-IAM5',
+                "reason": 'Databrew actions with * needs to suppressed',
+                "appliesTo": ['Action::databrew:*']
+            }
+        ]
 
         for func_ in [self.brew_run_job_lambda, self.callback_lambda_function,
                       self.lambda_callback_policy, self.lambda_brew_run_policy]:
-
             NagSuppressions.add_resource_suppressions(
-                func_.role if hasattr(func_ ,"role") else func_,
-                list_of_cdk_nags_to_suppress if hasattr(func_ ,"role") else list_of_cdk_nags_to_suppress[1:]
+                func_.role if hasattr(func_, "role") else func_,
+                list_of_cdk_nags_to_suppress if hasattr(func_, "role") else list_of_cdk_nags_to_suppress[1:]
             )
