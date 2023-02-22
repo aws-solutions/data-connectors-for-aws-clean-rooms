@@ -16,3 +16,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - [Inbound bucket prefix incorrectly applied for automatic trigger in AppFlow stack](https://github.com/aws-solutions/data-connectors-for-aws-clean-rooms/issues/11)
+
+## [1.1.0] - 2023-03-02
+
+- [Add Email notification for failing to automatic trigger DataBrew transform job](https://github.com/aws-solutions/data-connectors-for-aws-clean-rooms/issues/6)
+- [Handle errors caused by`empty-file-object` file placed in the inbound bucket during installation](https://github.com/aws-solutions/data-connectors-for-aws-clean-rooms/issues/19)
+- [Optimize automatic trigger DataBrew transform job workflow](https://github.com/aws-solutions/data-connectors-for-aws-clean-rooms/issues/7)
