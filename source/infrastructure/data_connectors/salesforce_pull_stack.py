@@ -29,7 +29,6 @@ from data_connectors.aws_lambda import LAMBDA_PATH
 from data_connectors.aws_lambda.layers.aws_solutions.layer import SolutionsLayer
 
 from data_connectors.appflow_pull_stack import AppFlowPullStack
-from data_connectors.orchestration.async_callback_construct import AsyncCallbackConstruct
 from data_connectors.orchestration.stepfunctions.workflows.salesforce_workflow import SalesforceWorkflow
 
 
@@ -523,12 +522,30 @@ class SalesforceMarketingCloudStack(AppFlowPullStack):
             "/SalesforceMarketingCloudStack/AppFlowConnectionSecret/Resource",
             [
                 {
-                    "id":
-                        "AwsSolutions-SMG4",
-                    "reason":
-                        "This secret's content does not support an auto-rotation process",
+                    "id": "AwsSolutions-SMG4",
+                    "reason": "This secret's content does not support an auto-rotation process",
                 },
             ],
+        )
+
+        # Sqs
+        NagSuppressions.add_resource_suppressions_by_path(
+            self,
+            "/SalesforceMarketingCloudStack/SqsBatching/Resource",
+            [
+                {
+                    "id": "AwsSolutions-SQS2",
+                    "reason": "The SQS Queue does not have server-side encryption enabled."
+                },
+                {
+                    "id": "AwsSolutions-SQS3",
+                    "reason": "The SQS queue does not have a dead-letter queue (DLQ) enabled or have a cdk-nag rule suppression indicating it is a DLQ."
+                },
+                {
+                    "id": "AwsSolutions-SQS4",
+                    "reason": "The SQS queue does not require requests to use SSL."
+                },
+            ]
         )
 
         NagSuppressions.add_resource_suppressions_by_path(
@@ -539,9 +556,9 @@ class SalesforceMarketingCloudStack(AppFlowPullStack):
                     "id": "AwsSolutions-IAM5",
                     "reason": nag_suppression_reason_for_wildcard_permissions,
                     "appliesTo": [
-                        "Resource::arn:aws:states:*:<AWS::AccountId>:activity:<SalesforceWorkflowS3TriggerDatabrewRunnerE97446C3.Name>:*",
-                        "Resource::arn:aws:states:*:<AWS::AccountId>:stateMachine:<SalesforceWorkflowS3TriggerDatabrewRunnerE97446C3.Name>",
-                        "Resource::arn:aws:states:*:<AWS::AccountId>:execution:<SalesforceWorkflowS3TriggerDatabrewRunnerE97446C3.Name>:*"
+                        "Resource::arn:aws:states:*:<AWS::AccountId>:activity:<SalesforceWorkflowS3TriggerDataBrewRunner632E7DE9.Name>:*",
+                        "Resource::arn:aws:states:*:<AWS::AccountId>:stateMachine:<SalesforceWorkflowS3TriggerDataBrewRunner632E7DE9.Name>",
+                        "Resource::arn:aws:states:*:<AWS::AccountId>:execution:<SalesforceWorkflowS3TriggerDataBrewRunner632E7DE9.Name>:*"
                     ]
                 }
             ],
@@ -578,10 +595,6 @@ class SalesforceMarketingCloudStack(AppFlowPullStack):
         )
 
     def create_workflow_deferred(self):
-        async_callback_construct = AsyncCallbackConstruct(
-            self, "SalesforceWorkflowOrchestration",
-            self.transform.recipe_job_name)
-
         self.appflow_launch_state_machine_name = f"{Aws.STACK_NAME}-AppflowLaunch"
         return SalesforceWorkflow(
             self, "SalesforceWorkflow",
@@ -593,7 +606,6 @@ class SalesforceMarketingCloudStack(AppFlowPullStack):
             self.transform.dataset_name, self.transform.
             transform_recipe_file_location_parameter.value_as_string,
             self.transform.recipe_job_name,
-            async_callback_construct.brew_run_job_lambda,
             self.sns_topic,
             self.dynamodb_table,
             self.transform.recipe_lambda_custom_resource_function,

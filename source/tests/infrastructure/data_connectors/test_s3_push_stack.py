@@ -50,7 +50,7 @@ def test_create_workflow(synth_template):
                     "",
                     [{
                         "Fn::GetAtt":
-                        ["StringManipulationCustomResource", "output_string"]
+                        ["StringTolowerCustomResource", "output_string"]
                     }, "-transform-dataset"]
                 ]
             },
@@ -59,7 +59,7 @@ def test_create_workflow(synth_template):
                     "",
                     [{
                         "Fn::GetAtt":
-                        ["StringManipulationCustomResource", "output_string"]
+                        ["StringTolowerCustomResource", "output_string"]
                     }, "-transform-project"]
                 ]
             },
@@ -68,7 +68,7 @@ def test_create_workflow(synth_template):
                     "",
                     [{
                         "Fn::GetAtt":
-                        ["StringManipulationCustomResource", "output_string"]
+                        ["StringTolowerCustomResource", "output_string"]
                     }, "-transform-recipe"]
                 ]
             },

@@ -29,6 +29,7 @@ def mock_env_variables():
     os.environ["STATE_MACHINE_ARN"] = "state_machine_arn"
     os.environ["AUTOMATIC_DATABREW_JOB_LAUNCH"] = "ON"
     os.environ["AWS_REGION"] = "us-east-1"
+    os.environ["WAITING_TIME_IN_MINUTES"] = "1"
 
 
 @pytest.fixture()
@@ -36,6 +37,12 @@ def _mock_stepfunctions_client():
     client = get_service_client('stepfunctions')
     client.start_execution = Mock(return_value={'executionArn': 'state_machine_execution_arn',
                                                 'startDate': datetime(2022, 1, 1)})
+    client.list_executions = Mock(
+        return_value={
+            'executions': [],
+            "nextToken": "any"
+        }
+    )
     return client
 
 
@@ -65,10 +72,10 @@ def dynamodb_client():
             }
         ]
         ddb.create_table(AttributeDefinitions=table_attr,
-            TableName=os.environ["DDB_TABLE_NAME"],
-            KeySchema=table_schema,
-            BillingMode='PAY_PER_REQUEST'
-        )
+                         TableName=os.environ["DDB_TABLE_NAME"],
+                         KeySchema=table_schema,
+                         BillingMode='PAY_PER_REQUEST'
+                         )
         yield ddb
 
 
@@ -78,13 +85,7 @@ def dynamodb_client():
         {
             "Records": [
                 {
-                    'eventTime': '2022-11-17T16:21:16.974Z',
-                    's3': {
-                        'bucket': {
-                            'arn': 's3_bucket_arn'
-                        },
-                        'object': 'file_1'
-                    }
+                    "body": "{\"Records\": [{\"eventTime\": \"2022-11-17T16:21:16.974Z\", \"s3\": {\"bucket\": {\"arn\": \"s3_bucket_arn\"}, \"object\": {\"key\": \"file_1\"}}}]}"
                 }
             ],
         }
@@ -97,8 +98,7 @@ def test_handler_success(lambda_event, mock_dynamodb_and_stepfunctions, dynamodb
     ts = table.query(KeyConditionExpression=Key("watching_key").eq(
         "s3_bucket_arn"))["Items"][0]["timestamp_str"]
 
-    _helpers_service_clients["stepfunctions"].start_execution.assert_called_once(
-    )
+    _helpers_service_clients["stepfunctions"].start_execution.assert_called_once()
 
     assert ts
 
@@ -109,7 +109,7 @@ def test_handler_success(lambda_event, mock_dynamodb_and_stepfunctions, dynamodb
         {
             "Records": [
                 {
-                    'eventTime': '2022-11-17T16:21:16.974Z',
+                    "body": "{\"Records\": [{\"eventTime\": \"2022-11-17T16:21:16.974Z\"}]}"
                 }
             ],
         }
