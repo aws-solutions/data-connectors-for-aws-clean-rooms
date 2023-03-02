@@ -11,12 +11,12 @@
 #  the specific language governing permissions and limitations under the License.                                      #
 # ######################################################################################################################
 """
-This module is a custom lambda for string manipulation
+This module is a custom lambda to remove empty file object place in the inbound bucket
 """
 
 from aws_lambda_powertools import Logger
 from crhelper import CfnResource
-
+from aws_solutions.core.helpers import get_service_client
 
 logger = Logger(utc=True, service='transform-custom-lambda')
 helper = CfnResource(log_level="ERROR", boto_level="ERROR")
@@ -31,14 +31,18 @@ def event_handler(event, context):
 
 
 @helper.create
-@helper.update
-def on_create_or_update(event, _) -> None:
+def on_create(event, _) -> None:
     resource_properties = event["ResourceProperties"]
-    input_string: str = resource_properties["input_string"]
-    logger.info(f"Input string: {input_string}")
-    helper.Data.update(
-        {
-            "output_string": input_string.lower()
-        }
-    )
-    
+    s3_client = get_service_client("s3")
+    inbound_bucket_name: str = resource_properties["inbound_bucket_name"]
+    inbound_bucket_prefix: str = resource_properties["inbound_bucket_prefix"]
+    object_key = f"{inbound_bucket_prefix}empty-file-object"
+
+    try:
+        s3_client.delete_object(
+            Bucket=inbound_bucket_name,
+            Key=object_key
+        )
+        logger.info(f"Deleted {object_key}")
+    except Exception as ex:
+        logger.exception(ex)

@@ -96,17 +96,17 @@ def on_delete(event, _) -> None:
 
 
 def upload_sample_file_object(resource_properties) -> None:
-    s3 = get_service_client("s3")
-    inbound_bucket_prefix: str = resource_properties["inbound_bucket_prefix"]
-    object_name = f"{inbound_bucket_prefix}empty-file-object"
+    s3_client = get_service_client("s3")
     inbound_bucket_name: str = resource_properties["inbound_bucket_name"]
+    inbound_bucket_prefix: str = resource_properties["inbound_bucket_prefix"]
+    object_key = f"{inbound_bucket_prefix}empty-file-object"
 
-    s3.upload_file(
-        "empty-file.txt", 
+    s3_client.upload_file(
+        "empty-file-object", 
         inbound_bucket_name,
-        object_name,
+        object_key,
     )
-    logger.info("Uploaded sample data file")
+    logger.info(f"Uploaded {object_key}")
 
 
 def recipe_file_content(recipe_s3_location: str):
