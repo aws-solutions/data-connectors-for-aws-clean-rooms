@@ -615,7 +615,6 @@ class SalesforceMarketingCloudStack(AppFlowPullStack):
                  **kwargs) -> None:
         # parent constructor
         super().__init__(scope, construct_id, *args, **kwargs)
-
         self.synthesizer.bind(self)
 
         # local parameters
