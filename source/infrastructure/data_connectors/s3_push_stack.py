@@ -33,6 +33,9 @@ class S3PushStack(BaseConnectorStack):
                  **kwargs) -> None:
         # parent constructor
         super().__init__(scope, construct_id, *args, **kwargs)
+
+        self.synthesizer.bind(self)
+
         self.add_cdk_nag_suppressions()
 
     def add_cdk_nag_suppressions(self):

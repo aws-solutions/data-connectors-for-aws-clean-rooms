@@ -616,6 +616,8 @@ class SalesforceMarketingCloudStack(AppFlowPullStack):
         # parent constructor
         super().__init__(scope, construct_id, *args, **kwargs)
 
+        self.synthesizer.bind(self)
+
         # local parameters
         self.salesforce_object_parameter = self.create_salesforce_object_parameter(
         )
