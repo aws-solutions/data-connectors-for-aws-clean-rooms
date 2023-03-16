@@ -35,6 +35,7 @@ def synth_template(mock_solution):
         SalesforceMarketingCloudStack.name,
         description=SalesforceMarketingCloudStack.description,
         template_filename=SalesforceMarketingCloudStack.template_filename,
+        synthesizer=mock_solution.synthesizer
     )
     synth_template = Template.from_stack(stack)
     yield synth_template
