@@ -3,7 +3,7 @@
   "context": {
     "SOLUTION_NAME": "Data Connectors for AWS Clean Rooms",
     "SOLUTION_ID": "SO0221",
-    "SOLUTION_VERSION": "v1.0.0",
+    "SOLUTION_VERSION": "v1.1.0",
     "SYNTH_TRANSFORMS": true,
     "SYNTH_ORCHESTRATION": true,
     "SYNTH_BUCKETS": true,
