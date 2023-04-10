@@ -1,8 +1,7 @@
 # ignore Config used with code.amazon.com
 Config
 
-# these are email addresses used in functional test
-tests/ci/taskcat1.yml
+# ignore the following
 .venv
 cdk.out
 source/infrastructure/regional-s3-assets
