@@ -36,6 +36,7 @@ def synth_template(mock_solution):
         S3PushStack.name,
         description=S3PushStack.description,
         template_filename=S3PushStack.template_filename,
+        synthesizer=mock_solution.synthesizer
     )
     synth_template = Template.from_stack(stack)
     yield synth_template
