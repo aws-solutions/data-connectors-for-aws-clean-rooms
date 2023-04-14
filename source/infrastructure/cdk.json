@@ -3,10 +3,11 @@
   "context": {
     "SOLUTION_NAME": "Data Connectors for AWS Clean Rooms",
     "SOLUTION_ID": "SO0221",
-    "SOLUTION_VERSION": "v1.1.0",
+    "SOLUTION_VERSION": "v1.1.1",
     "SYNTH_TRANSFORMS": true,
     "SYNTH_ORCHESTRATION": true,
     "SYNTH_BUCKETS": true,
-    "BUCKET_NAME": "BUCKET_NAME"
+    "BUCKET_NAME": "BUCKET_NAME",
+    "@aws-cdk/aws-s3:serverAccessLogsUseBucketPolicy": true
   }
 }

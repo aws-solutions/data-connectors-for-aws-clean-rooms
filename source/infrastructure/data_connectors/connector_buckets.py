@@ -42,7 +42,8 @@ class ConnectorBuckets:
             auto_delete_objects=False,
             server_access_logs_bucket=self.solution_logging_bucket,
             server_access_logs_prefix="inbound-logs/",
-            versioned=True
+            versioned=True,
+            object_ownership=aws_s3.ObjectOwnership.BUCKET_OWNER_ENFORCED
         )
 
         # adjust prefix based on the stack type
@@ -60,6 +61,7 @@ class ConnectorBuckets:
             f"{Aws.STACK_NAME}-flow/"
         ).to_string()
 
+
     def create_transform_bucket(self, stack: Stack) -> None:
         """
         This function is responsible for creating the bucket and prefix for transformed data
@@ -74,9 +76,11 @@ class ConnectorBuckets:
             auto_delete_objects=False,
             server_access_logs_bucket=self.solution_logging_bucket,
             server_access_logs_prefix="transform-logs/",
-            versioned=True
+            versioned=True,
+            object_ownership=aws_s3.ObjectOwnership.BUCKET_OWNER_ENFORCED
         )
         self.transform_bucket_prefix = TRANSFORM_BUCKET_PREFIX
+
 
     def create_access_logging_bucket(self, stack: Stack) -> None:
         """
@@ -91,7 +95,8 @@ class ConnectorBuckets:
             enforce_ssl=True,
             removal_policy=RemovalPolicy.RETAIN,
             auto_delete_objects=False,
-            versioned=True
+            versioned=True,
+            object_ownership=aws_s3.ObjectOwnership.BUCKET_OWNER_ENFORCED
         )
 
     def create_iam_group(self, stack: Stack) -> None:
@@ -201,6 +206,31 @@ class ConnectorBuckets:
             }],
         )
 
+
+    def enable_server_access_logging(self):
+        self.solution_logging_bucket.add_to_resource_policy(
+            aws_iam.PolicyStatement(
+                effect=aws_iam.Effect.ALLOW,
+                sid="S3ServerAccessLogsPolicy",
+                principals=[aws_iam.ServicePrincipal("logging.s3.amazonaws.com")],
+                actions=["s3:PutObject"],
+                resources=[
+                    f"{self.solution_logging_bucket.bucket_arn}/*"
+                ],
+                conditions={
+                    "ArnLike": {
+                        "aws:SourceArn": [
+                            self.inbound_bucket.bucket_arn,
+                            self.transform_bucket.bucket_arn,
+                        ]
+                    },
+                    "StringEquals": {
+                        "aws:SourceAccount": Aws.ACCOUNT_ID
+                    }
+                }
+            )
+        )
+
     def __init__(self, stack: Stack):
         self.create_access_logging_bucket(stack=stack)
         self.create_inbound_bucket(stack=stack)
@@ -208,3 +238,5 @@ class ConnectorBuckets:
         self.create_stack_outputs(stack=stack)
         self.create_iam_group(stack=stack)
         self.create_cdk_nag_suppressions()
+        self.enable_server_access_logging()
+       
