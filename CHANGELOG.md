@@ -24,4 +24,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [Optimize automatic trigger DataBrew transform job workflow](https://github.com/aws-solutions/data-connectors-for-aws-clean-rooms/issues/7)
 
 ## [1.1.1] - 2023-04-18
+
 - [Set s3 object ownership in order to maintain compatibility with s3 access logging [#44](https://github.com/aws-solutions/data-connectors-for-aws-clean-rooms/issues/44)]
