@@ -1,0 +1,17 @@
+# ignore Config used with code.amazon.com
+Config
+
+# ignore the following
+.venv
+cdk.out
+source/infrastructure/regional-s3-assets
+
+# all sample data that intentionally includes fake PII
+docs/Databrew-Recipe-Samples
+
+[python-pipoutdated]
+aws-lambda=0.2.0
+infrastructure=1.0.0
+aws-sam-cli=1.58.0
+pip=21.1.2
+charset-normalizer=2.0.12
