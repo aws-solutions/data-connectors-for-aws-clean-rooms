@@ -72,6 +72,8 @@ def test_on_create(lambda_event, mock_databrew_and_s3):
     _helpers_service_clients['s3'].get_object.assert_called_once()
     _helpers_service_clients['s3'].upload_file.assert_called_once()
     _helpers_service_clients["databrew"].create_recipe.assert_called_once()
+    recipe = _helpers_service_clients["databrew"].create_recipe
+    assert recipe.return_value["Name"] == "databrew_recipe_name"
 
 
 @pytest.mark.parametrize(
@@ -86,13 +88,14 @@ def test_on_create(lambda_event, mock_databrew_and_s3):
                     'recipe_name': 'recipe.json'
                 },
             "RequestType": "Update",
-
         }
     ],
 )
 def test_on_update(lambda_event, mock_databrew_and_s3):
     on_create_or_update(lambda_event, None)
     _helpers_service_clients["databrew"].update_recipe.assert_called_once()
+    recipe = _helpers_service_clients["databrew"].update_recipe
+    assert recipe.return_value["Name"] == "update_recipe_name"
 
 
 @pytest.mark.parametrize(

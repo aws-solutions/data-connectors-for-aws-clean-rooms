@@ -232,7 +232,6 @@ class ConnectorBuckets:
             )
         )
 
-
     def __init__(self, stack: Stack):
         self.create_access_logging_bucket(stack=stack)
         self.create_inbound_bucket(stack=stack)
@@ -241,3 +240,4 @@ class ConnectorBuckets:
         self.create_iam_group(stack=stack)
         self.enable_server_access_logging()
         self.create_cdk_nag_suppressions()
+       

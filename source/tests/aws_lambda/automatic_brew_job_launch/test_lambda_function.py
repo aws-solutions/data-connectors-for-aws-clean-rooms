@@ -95,12 +95,12 @@ def test_handler_success(lambda_event, mock_dynamodb_and_stepfunctions, dynamodb
     event_handler(lambda_event, None)
 
     table = dynamodb_client.Table(os.environ["DDB_TABLE_NAME"])
-    ts = table.query(KeyConditionExpression=Key("watching_key").eq(
+    timestamp_str = table.query(KeyConditionExpression=Key("watching_key").eq(
         "s3_bucket_arn"))["Items"][0]["timestamp_str"]
 
     _helpers_service_clients["stepfunctions"].start_execution.assert_called_once()
 
-    assert ts
+    assert timestamp_str
 
 
 @pytest.mark.parametrize(

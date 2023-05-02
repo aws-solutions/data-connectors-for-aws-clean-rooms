@@ -11,15 +11,9 @@
 #  the specific language governing permissions and limitations under the License.                                      #
 # ######################################################################################################################
 
-from pathlib import Path
 import json
 import os
-import aws_cdk as cdk
-import pytest
 from unittest.mock import patch, Mock, MagicMock
-from aws_cdk.assertions import Template, Capture
-from aws_solutions.core.helpers import get_service_client, _helpers_service_clients, _helpers_service_resources
-from aws_solutions.cdk import CDKSolution
 
 SECRET_VALUE = {
     'SecretString':
@@ -37,13 +31,12 @@ def mock_environ():
     """
     This function is the mocked (replaced) function for returning environment variables
     """
-    mock_env = {
+    return {
         "CONNECTOR_SECRET_ARN": "MockSecretARN",
         "AWS_REGION": "us-east-1",
         "SOLUTION_ID": "SO999",
-        "SOLUTION_VERSION": "v9.9.9"
+        "SOLUTION_VERSION": "v9.9.9",
     }
-    return mock_env
 
 
 class MockSecretsManager:
@@ -62,34 +55,37 @@ class MockConnectorProfile:
        new=MagicMock(return_value=MockSecretsManager))
 def test_get_connector_profile():
     from aws_lambda.connectors.salesforce import connector_profile
-    connector_profile.get_connector_profile()
+    sf_connectorprofile = connector_profile.get_connector_profile()
+    assert sf_connectorprofile.connector_type == "CustomConnector"
+    assert sf_connectorprofile.grant_type == "CLIENT_CREDENTIALS"
 
-
+@patch.dict(os.environ, { "CONNECTOR_SECRET_ARN": "MockSecretARN"}, clear=True)
 @patch('os.environ', new=mock_environ())
 @patch('aws_lambda_powertools.Logger', new=Mock())
-@patch(
-    'aws_lambda.connectors.salesforce.connector_profile.get_connector_profile',
+@patch('aws_lambda.connectors.salesforce.connector_profile.get_connector_profile',
     new=MagicMock(return_value=MockConnectorProfile))
 def test_create_event_handler():
     from aws_lambda.connectors.salesforce import connector_profile
-    connector_profile.create_event_handler({}, {})
-
+    sf_connector_handler = connector_profile.create_event_handler({}, {})
+    assert sf_connector_handler
 
 @patch('os.environ', new=mock_environ())
+@patch.dict(os.environ, { "CONNECTOR_SECRET_ARN": "MockSecretARN", "MY_PASS": "P@ssw0rd" }, clear=True)
 @patch('aws_lambda_powertools.Logger', new=Mock())
-@patch(
-    'aws_lambda.connectors.salesforce.connector_profile.get_connector_profile',
+@patch('aws_lambda.connectors.salesforce.connector_profile.get_connector_profile',
     new=MagicMock(return_value=MockConnectorProfile))
 def test_update_event_handler():
     from aws_lambda.connectors.salesforce import connector_profile
-    connector_profile.update_event_handler({}, {})
+    sf_connector_handler = connector_profile.update_event_handler({}, {})
+    assert sf_connector_handler
 
 
 @patch('os.environ', new=mock_environ())
 @patch('aws_lambda_powertools.Logger', new=Mock())
-@patch(
-    'aws_lambda.connectors.salesforce.connector_profile.get_connector_profile',
+@patch('aws_lambda.connectors.salesforce.connector_profile.get_connector_profile',
     new=MagicMock(return_value=MockConnectorProfile))
 def test_delete_event_handler():
     from aws_lambda.connectors.salesforce import connector_profile
-    connector_profile.delete_event_handler({}, {})
+    sf_connector_handler = connector_profile.delete_event_handler({}, {})
+    assert sf_connector_handler
+   
