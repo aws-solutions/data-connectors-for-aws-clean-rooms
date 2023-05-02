@@ -2,7 +2,7 @@ avro==1.11.1
 wheel
 black
 boto3
-aws_cdk_lib~=2.59.0
+aws_cdk_lib>=2.69.0
 aws_solutions_constructs.aws_lambda_sns~=2.25.0
 aws_solutions_constructs.aws_eventbridge_lambda~=2.25.0
 aws_solutions_constructs.aws_lambda_dynamodb~=2.25.0

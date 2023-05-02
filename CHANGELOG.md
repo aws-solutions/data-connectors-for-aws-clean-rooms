@@ -26,3 +26,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.1.1] - 2023-04-18
 
 - [Set s3 object ownership in order to maintain compatibility with s3 access logging [#44](https://github.com/aws-solutions/data-connectors-for-aws-clean-rooms/issues/44)]
+
+## [1.2.0] - 2023-05-02
+
+- [cdk-solution-helper-py compatibility with cdk-lib versions greater than 2.61.0 [#8](https://github.com/aws-solutions/data-connectors-for-aws-clean-rooms/issues/8)]
+- [Additional asserts statements and enhancements to unit test [#40](https://github.com/aws-solutions/data-connectors-for-aws-clean-rooms/issues/40)]
+- [Removed empty test file from project [#39](https://github.com/aws-solutions/data-connectors-for-aws-clean-rooms/issues/39)]
+- [Clean up .viperlightignore file [#38](https://github.com/aws-solutions/data-connectors-for-aws-clean-rooms/issues/38)]
+- [SOLUTION_VERSION in cdk.json updated [37](https://github.com/aws-solutions/data-connectors-for-aws-clean-rooms/issues/37)]
+- [Assert in unit test that expiry time (ttl) is calculated correctly [36](https://github.com/aws-solutions/data-connectors-for-aws-clean-rooms/issues/36)]
+- [Instructions in README.md file now behave as expected for running unit tests [#35](https://github.com/aws-solutions/data-connectors-for-aws-clean-rooms/issues/35)]

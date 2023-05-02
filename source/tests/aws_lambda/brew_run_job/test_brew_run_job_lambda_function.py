@@ -17,8 +17,9 @@ import pytest
 from moto import mock_dynamodb
 from unittest.mock import Mock, call
 from boto3.dynamodb.conditions import Key
+import time
 
-from brew_run_job.lambda_function import handler, logger as lambda_function_logger
+from brew_run_job.lambda_function import handler, logger as lambda_function_logger, TTL_EXPIRY_PERIOD
 from aws_solutions.core.helpers import get_service_client, _helpers_service_clients, _helpers_service_resources
 import shared.stepfunctions as stepfunctions
 
@@ -94,6 +95,23 @@ def test_handler_success(lambda_event, mock_databrew_and_stepfunctions, dynamodb
     _helpers_service_clients["databrew"].start_job_run.assert_called_once()
     stepfunctions.send_heart_beat.assert_has_calls([call('faketoken'), call('faketoken')])
 
+
+@pytest.mark.parametrize(
+    "lambda_event",
+    [
+        {
+            "task_token": "faketoken",
+            "brew_job_name": "Job-Name",
+        }
+    ],
+)
+def test_exp_time(lambda_event, mock_databrew_and_stepfunctions, dynamodb_client):
+    current_time = int(time.time())
+    handler(lambda_event, None)
+    table = dynamodb_client.Table(os.environ["DDB_TABLE_NAME"])
+    exp_time = table.query(KeyConditionExpression=Key("job_id").eq("ids"))["Items"][0]['exp_timestamp']
+    ttl_expiry_period_in_seconds = TTL_EXPIRY_PERIOD * 24 * 60 * 60
+    assert (exp_time - current_time) == ttl_expiry_period_in_seconds
 
 
 @pytest.mark.parametrize(
