@@ -31,6 +31,7 @@ from data_connectors.aws_lambda import LAMBDA_PATH
 from data_connectors.aws_lambda.layers.aws_solutions.layer import SolutionsLayer
 
 DATABREW_CUSTOM_SECRETS_PREFIX = "AwsGlueDataBrew-transform-secret"
+IAM_WILDCARD_SUPRESSION_MSG = "IAM entity contains wildcard permissions"
 
 
 class InboundDataUploadType(Enum):
@@ -770,7 +771,7 @@ def create_stack_outputs(self, stack) -> None:
 
 
 def databrew_role_apply_nag_suppressions(databrew_iam_role) -> None:
-    nag_suppression_reason = "IAM entity contains wildcard permissions"
+    nag_suppression_reason = IAM_WILDCARD_SUPRESSION_MSG
     NagSuppressions.add_resource_suppressions(
         databrew_iam_role,
         [
@@ -802,7 +803,7 @@ def databrew_role_apply_nag_suppressions(databrew_iam_role) -> None:
 
 
 def recipe_policy_apply_nag_suppresions(recipe_lambda_iam_policy) -> None:
-    nag_suppression_reason = "IAM entity contains wildcard permissions"
+    nag_suppression_reason = IAM_WILDCARD_SUPRESSION_MSG
     NagSuppressions.add_resource_suppressions(
         recipe_lambda_iam_policy,
         [
@@ -829,7 +830,7 @@ def object_remove_policy_apply_nag_suppresions(object_remove_lambda_iam_policy):
         [
             {
                 "id": 'AwsSolutions-IAM5',
-                "reason": "IAM entity contains wildcard permissions",
+                "reason": IAM_WILDCARD_SUPRESSION_MSG,
                 "appliesTo": ['Resource::arn:aws:s3:::<inboundbucketFA352838>/{"Fn::If":["InboundBucketPrefixCondition","inbound/",{"Fn::Join":["",[{"Ref":"AWS::StackName"},"-flow/"]]}]}*']
             },
         ]

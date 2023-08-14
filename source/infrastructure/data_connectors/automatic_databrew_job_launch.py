@@ -144,6 +144,7 @@ class AutomaticDatabrewJobLaunch:
             stack, "SqsBatching",
             visibility_timeout=Duration.seconds(SQSQueueParameters.visibility_timeout_in_seconds),
             queue_name=f"{Aws.STACK_NAME}-s3-notifications",
+            encryption=sqs.QueueEncryption.SQS_MANAGED
         )
 
     def add_s3_notifications_to_sqs(self, stack):

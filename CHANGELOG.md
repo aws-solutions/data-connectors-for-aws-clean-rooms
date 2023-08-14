@@ -35,4 +35,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [Clean up .viperlightignore file [#38](https://github.com/aws-solutions/data-connectors-for-aws-clean-rooms/issues/38)]
 - [SOLUTION_VERSION in cdk.json updated [37](https://github.com/aws-solutions/data-connectors-for-aws-clean-rooms/issues/37)]
 - [Assert in unit test that expiry time (ttl) is calculated correctly [36](https://github.com/aws-solutions/data-connectors-for-aws-clean-rooms/issues/36)]
-- [Instructions in README.md file now behave as expected for running unit tests [#35](https://github.com/aws-solutions/data-connectors-for-aws-clean-rooms/issues/35)]
+- [Instructions in README.md file now behave as expected for running unit tests [#35](https://github.com/aws-solutions/data-connectors-for-aws-clean-rooms/issues/35)] 
+
+## [1.2.1] - 2023-08-14
+
+- Upgrade ``requests`` library to version 2.31.0 to fix vulnerability reported by Dependabot
+- Modify Access logging bucket object ownership to Bucket owner preferred
+- Add SQS-managed encryption to SQS queue in the solution
+- Add new constant for duplicated IAM message string
