@@ -37,7 +37,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [Assert in unit test that expiry time (ttl) is calculated correctly [36](https://github.com/aws-solutions/data-connectors-for-aws-clean-rooms/issues/36)]
 - [Instructions in README.md file now behave as expected for running unit tests [#35](https://github.com/aws-solutions/data-connectors-for-aws-clean-rooms/issues/35)] 
 
-## [1.2.1] - 2023-08-14
+## [1.2.1] - 2023-08-15
 
 - Upgrade ``requests`` library to version 2.31.0 to fix vulnerability reported by Dependabot
 - Modify Access logging bucket object ownership to Bucket owner preferred
