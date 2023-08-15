@@ -61,12 +61,12 @@ def send_metrics(event, _):
         }
 
         logger.info(f"Sending payload: {payload}")
-        response = requests.post(METRICS_ENDPOINT, json=payload, headers=headers)
+        response = requests.post(METRICS_ENDPOINT, json=payload, headers=headers, timeout=10)
         logger.info(
             f"Response from metrics endpoint: {response.status_code} {response.reason}"
         )
         if "stackTrace" in response.text:
-            logger.exception("Error submitting usage data: %s" % response.text)
+            logger.exception(f"Error submitting usage data: {response.text}")
         # raise when there is an HTTP error (non success code)
         response.raise_for_status()
     except requests.exceptions.RequestException as exc:

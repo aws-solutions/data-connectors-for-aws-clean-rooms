@@ -48,14 +48,13 @@ class AccessToken:
         This function is responsible for retrieving a
         token over HTTP from an OIDC provider
         """
-        response = requests.post(self.token_endpoint, json=self.body)
-        if response.ok:
-            json = response.json()
-            return {
-                "access_token": json["access_token"],
-                "expires_in": json["expires_in"],
-            }
-        else:
+        response = requests.post(self.token_endpoint, json=self.body, timeout=10)
+        if not response.ok:
             raise AccessTokenException(
                 f"{response.status_code} status returned from {self.token_endpoint}"
             )
+        json = response.json()
+        return {
+            "access_token": json["access_token"],
+            "expires_in": json["expires_in"],
+        }

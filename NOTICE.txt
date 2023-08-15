@@ -67,10 +67,10 @@ This software includes third party software subject to the following copyrights:
  pytest                                           7.2.0      MIT License
  pytest-cov                                       4.0.0      MIT License
  pytest-env                                       0.8.1      MIT License
- pytest-mock                                      3.10.0     MIT License
+ pytest-mock                                      3.11.1     MIT License
  python-dateutil                                  2.8.2      Apache Software License; BSD License
  pytz                                             2022.6     MIT License
- requests                                         2.28.1     Apache Software License
+ requests                                         2.31.0     Apache Software License
  responses                                        0.17.0     Apache 2.0
  s3transfer                                       0.6.0      Apache Software License
  shared                                           0.0.0      Apache Software License

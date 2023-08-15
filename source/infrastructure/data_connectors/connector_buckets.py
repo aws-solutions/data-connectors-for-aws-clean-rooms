@@ -96,7 +96,7 @@ class ConnectorBuckets:
             removal_policy=RemovalPolicy.RETAIN,
             auto_delete_objects=False,
             versioned=True,
-            object_ownership=aws_s3.ObjectOwnership.BUCKET_OWNER_ENFORCED
+            object_ownership=aws_s3.ObjectOwnership.BUCKET_OWNER_PREFERRED
         )
 
 
