@@ -1,4 +1,4 @@
-avro==1.11.1
+avro==1.11.3
 wheel
 black
 boto3

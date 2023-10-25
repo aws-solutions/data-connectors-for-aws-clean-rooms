@@ -39,7 +39,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.2.1] - 2023-08-15
 
+- [Fix vulnerability alerts in v1.2.0 reported by Dependabot [#55](https://github.com/aws-solutions/data-connectors-for-aws-clean-rooms/issues/55)]
+- [Dependabot: Unintended leak of Proxy-Authorization header in requests [#50](https://github.com/aws-solutions/data-connectors-for-aws-clean-rooms/security/dependabot/2) [#51](https://github.com/aws-solutions/data-connectors-for-aws-clean-rooms/security/dependabot/1) [#52](https://github.com/aws-solutions/data-connectors-for-aws-clean-rooms/security/dependabot/3) [#53](https://github.com/aws-solutions/data-connectors-for-aws-clean-rooms/security/dependabot/4) [#54](https://github.com/aws-solutions/data-connectors-for-aws-clean-rooms/security/dependabot/5)]
 - Upgrade ``requests`` library to version 2.31.0 to fix vulnerability reported by Dependabot
 - Modify Access logging bucket object ownership to Bucket owner preferred
 - Add SQS-managed encryption to SQS queue in the solution
 - Add new constant for duplicated IAM message string
+
+## [1.2.2] - 2023-10-23
+
+- Upgrade ``avro`` library to version 1.11.3 to fix vulnerability reported by Dependabot
+- Upgrade ``urllib3`` to version 1.26.18 to solve the security vulnerabilities
