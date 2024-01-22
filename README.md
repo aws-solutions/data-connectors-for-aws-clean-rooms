@@ -1,5 +1,7 @@
 # Data Connectors for AWS Clean Rooms
 
+**This AWS Solution is no longer maintained. Existing deployments will continue to run. If you have deployed this solution on AWS via cloning GitHub open source code, you may continue to use the solution as-is.**
+
 Data Connectors for AWS Clean Rooms
 
 ## Table of Contents
