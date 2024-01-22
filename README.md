@@ -3,7 +3,6 @@
 > [!WARNING]
 > **THIS AWS SOLUTION IS NO LONGER MAINTAINED**
 
-Data Connectors for AWS Clean Rooms
 
 ## Table of Contents
 
