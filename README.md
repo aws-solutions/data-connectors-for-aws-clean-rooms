@@ -1,6 +1,8 @@
 # Data Connectors for AWS Clean Rooms
 
-Data Connectors for AWS Clean Rooms
+> [!WARNING]
+> **THIS AWS SOLUTION IS NO LONGER MAINTAINED**
+
 
 ## Table of Contents
 
